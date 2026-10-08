@@ -1,12 +1,11 @@
 /**
- * Único lugar donde se definen los nombres de los roles.
- * Solo ADMIN es fijo del sistema; el resto es PROVISIONAL hasta que el cliente lo confirme.
+ * Único lugar donde se definen los nombres de los roles (confirmados por el cliente).
+ * Matriz de permisos: docs/SPEC.md §2.
  */
 export const ROLES = {
   ADMIN: 'ADMIN',
-  REVISOR: 'REVISOR',
-  IMPRESION: 'IMPRESION',
-  ENTREGA: 'ENTREGA',
+  COORDINATOR: 'COORDINADOR',
+  OPERATOR: 'OPERADOR',
 } as const;
 
 export type RoleName = (typeof ROLES)[keyof typeof ROLES];

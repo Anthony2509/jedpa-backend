@@ -1,129 +1,198 @@
-# Especificación funcional — Sprint 1 (S1-03)
+# Especificación funcional — JEDPA 2026
 
-Sistema de credenciales JEDPA. Este documento fija el alcance funcional del Sprint 1 y el contrato de la API para el equipo frontend.
+Sistema de credenciales de los Juegos Escolares Deportivos y Paradeportivos.
+Fuentes: *Plan de Desarrollo JEDPA 2026 v1.0* (07/10/2026), *Respuestas a preguntas del cliente* (08/10/2026) y el Excel de referencia *Control de IMPRESIÓN de documentos* (edición anterior; los datos no están actualizados).
 
-> Lo marcado como **PROVISIONAL** o **SUPUESTO** está pendiente de confirmación del cliente y puede cambiar.
+> **CONFIRMADO**: lo respondió el cliente por escrito. **SUPUESTO**: decisión del equipo pendiente de validar. Las preguntas abiertas están en `docs/PREGUNTAS-CLIENTE.md`.
 
-## 1. Roles (PROVISIONALES)
+## 1. Flujo
 
-Solo `ADMIN` es un rol fijo del sistema. Los demás son **provisionales, pendientes de confirmación del cliente**; sus nombres viven en `src/common/constants/roles.ts`.
+Registro/importación → carga documental → revisión y validación → habilitación de impresión → impresión de credencial con QR → confirmación de entrega → reportes y exportación Excel.
 
-| Rol | Descripción | Alcance |
+"Impresa" y "entregada" son estados separados: **imprimir nunca marca la entrega**.
+
+## 2. Roles — CONFIRMADO
+
+| Rol (código) | Nombre del cliente | Alcance |
 |---|---|---|
-| `ADMIN` | Administra todo: usuarios, catálogos y auditoría. | Sprint 1 |
-| `REVISOR` | Alta y edición de participantes. En el Sprint 2 revisará documentos. | Sprint 1 (participantes) · Sprint 2 (documentos) |
-| `IMPRESION` | Emitirá e imprimirá credenciales. | Sprint 2 |
-| `ENTREGA` | Confirmará la entrega física de credenciales. | Sprint 3 |
+| `ADMIN` | Administrador | Todo, incluidos usuarios, catálogos, reportería completa y auditoría. |
+| `COORDINADOR` | Coordinador | Participantes y credenciales especiales, diplomas, reportería básica. |
+| `OPERADOR` | Operador | Participantes regulares (documentos, revisión, impresión) y diplomas. |
 
-En el Sprint 1, `IMPRESION` y `ENTREGA` solo tienen los permisos de lectura comunes a cualquier usuario autenticado.
+Matriz del cliente:
 
-## 2. Matriz de permisos — Sprint 1
+| Capacidad | ADMIN | COORDINADOR | OPERADOR |
+|---|:-:|:-:|:-:|
+| Todo sobre participantes regulares (Deportista, Acompañante, Delegado, Entrenador): subir documentos, revisarlos, aprobarlos e imprimir credenciales | ✔ | ✔ | ✔ |
+| Credenciales especiales (MINEDU, Invitado, Proveedor acceso total y parcial): cargar datos y emitir | ✔ | ✔ | — |
+| Diplomas: seleccionar participante e imprimir sus datos en el diploma preimpreso | ✔ | ✔ | ✔ |
+| Reportería nivel 1 (avance básico) | ✔ | ✔ | — |
+| Reportería completa y auditoría (quién modificó qué) | ✔ | — | — |
 
-| Recurso | Lectura | Crear / editar | Activar / desactivar |
-|---|---|---|---|
-| Autenticación | Todos | — | — |
-| Usuarios | ADMIN | ADMIN | ADMIN |
-| Roles | ADMIN | — (datos semilla) | — |
-| Lugares de entrega | Cualquier autenticado | ADMIN | ADMIN |
-| Tipos de participante | Cualquier autenticado | ADMIN | ADMIN |
-| Participantes | Cualquier autenticado | ADMIN, REVISOR | ADMIN |
-| Auditoría | ADMIN | — (solo inserción interna) | — |
+**SUPUESTOS** (el cliente no los menciona): la gestión de usuarios y catálogos es solo de ADMIN; registrar entregas lo pueden hacer los tres roles; activar o desactivar participantes es solo de ADMIN; la importación Excel la hacen ADMIN y COORDINADOR.
 
-No hay borrado físico: "eliminar" equivale a desactivar (`isActive = false`).
+## 3. Tipos de participante — CONFIRMADO
 
-## 3. Participante
+Coinciden con los tipos de credencial que se imprimen.
 
-| Campo | Tipo | Obligatorio | Reglas |
-|---|---|---|---|
-| `id` | UUID | auto | Clave primaria. |
-| `dni` | string | sí | Exactamente 8 dígitos numéricos (`^\d{8}$`). Único. *(SUPUESTO)* |
-| `firstName` | string | sí | Nombres. |
-| `lastName` | string | sí | Apellidos. |
-| `schoolName` | string | sí | Institución educativa. |
-| `participantTypeId` | UUID | sí | Debe existir y estar activo en tipos de participante. |
-| `birthDate` | date | no | Fecha de nacimiento (`YYYY-MM-DD`). |
-| `phone` | string | no | Teléfono de contacto. |
-| `extraData` | JSON | no | Absorbe columnas del Excel del cliente que aún no tienen campo propio. |
-| `status` | enum | auto | Estado del flujo (ver §4). Inicial: `PENDING_DOCUMENTS`. No se edita por el CRUD. |
-| `isActive` | boolean | auto | `true` al crear. Solo ADMIN lo cambia. |
-| `createdAt` / `updatedAt` | timestamptz | auto | — |
+| Código | Nombre | Categoría | Acceso en credencial | Requisitos documentales |
+|---|---|---|---|---|
+| `DEPORTISTA` | Deportista | Regular | por confirmar | Resolución Directoral, DNI, Certificado médico, Seguro, Foto |
+| `ACOMPANANTE` | Acompañante | Regular | por confirmar | Deportista que no cumple algún documento obligatorio (ver pregunta P1) |
+| `DELEGADO` | Delegado | Regular | por confirmar | Resolución Directoral, DNI, Foto |
+| `ENTRENADOR` | Entrenador | Regular | por confirmar | Resolución Directoral, DNI |
+| `MINEDU` | MINEDU | Especial | por confirmar | Ninguno: se crea e imprime directamente |
+| `INVITADO` | Invitado | Especial | Parcial (según arte) | Ninguno |
+| `PROVEEDOR_TOTAL` | Proveedor acceso total | Especial | Total | Ninguno |
+| `PROVEEDOR_PARCIAL` | Proveedor acceso parcial | Especial | Parcial | Ninguno |
 
-Un DNI duplicado responde `409 Conflict` con un mensaje en español.
+- Los requisitos se modelan como **datos** (tabla `document_requirements`: tipo de participante × tipo de documento × obligatorio), no como código. Así un cambio del cliente no requiere desplegar.
+- **Paradeportista** no es un tipo propio: es un Deportista con discapacidad (tipo y clase de discapacidad en su ficha). Ver P3.
 
-## 4. Estados del participante
+## 4. Documentos — CONFIRMADO (catálogo)
 
-`PENDING_DOCUMENTS` → `IN_REVIEW` → (`OBSERVED` ↺) → `READY_TO_PRINT` → `PRINTED` → `DELIVERED`
+| Código | Documento | Notas |
+|---|---|---|
+| `RESOLUCION_DIRECTORAL` | Resolución Directoral | Un PDF por macrorregión (8 en total, 8–10 páginas). Se sube una vez y se **vincula** al perfil de cada participante que figura en ella. Vincularlo equivale a confirmar que está inscrito y apto. |
+| `DOCUMENTO_DESIGNACION` | Documento de designación (docente) | |
+| `DNI` | Documento de identidad | |
+| `CERTIFICADO_MEDICO` | Certificado médico | Dato de salud: sensible. |
+| `CERTIFICADO_DISCAPACIDAD` | Certificado de discapacidad | Dato de salud: sensible. |
+| `SEGURO` | Seguro | |
+| `AUTORIZACION_NOTARIAL` | Autorización notarial | |
+| `RESPONSABILIDAD_PARTICIPACION` | Anexo 2: responsabilidad de participación | |
+| `AUTORIZACION_USO_IMAGEN` | Anexo 3: autorización de uso de imagen | |
+| `DDJJ_ENTRENADOR_DELEGADO` | Anexo 6: declaración jurada entrenador-delegado | |
+| `FOTO` | Foto | También se imprime en la credencial. |
 
-- En el Sprint 1 todo participante nace en `PENDING_DOCUMENTS`. Las transiciones se implementan en los sprints 2 y 3.
-- `PRINTED` y `DELIVERED` son estados distintos: **imprimir nunca marca la entrega**.
+**Estado por documento** (plan §3): `PENDING`, `APPROVED`, `OBSERVED`, `NOT_APPLICABLE`, con observación, revisor y fecha. Equivalencias para importar el Excel: PENDIENTE → `PENDING`; IMPRESO, APROBADA y VALIDADO E IMPRESO → `APPROVED`; OBSERVADO u OBSERVADA → `OBSERVED`; NO APLICA → `NOT_APPLICABLE`.
 
-## 5. Supuestos a validar con el cliente
+Formatos y tamaños máximos de archivo: **SUPUESTO**, PDF/JPG/PNG de hasta 5 MB (foto: JPG/PNG).
 
-1. El DNI tiene exactamente 8 dígitos numéricos. Falta definir el tratamiento de carnés de extranjería o pasaportes.
-2. Tipos de participante iniciales (provisionales): **Alumno**, **Entrenador**, **Paradeportista**.
-3. Lugares de entrega iniciales: **Colegio**, **Melitón Carvajal / IPD**, **Sede de competencia**.
-4. Formatos, tamaños y reglas de documentos (certificado médico, seguro, foto, etc.): **aún sin definir**. Fuera del Sprint 1.
-5. Columnas definitivas del Excel de participantes: pendientes (mientras tanto se usa `extraData`).
-6. Roles `REVISOR`, `IMPRESION` y `ENTREGA`: nombres y responsabilidades por confirmar.
+## 5. Organización deportiva — CONFIRMADO
 
-## 6. Contrato de la API — Sprint 1
+- **Macrorregión:** 8 (`M1`…`M8`). Cada una tiene una sede (p. ej. M1 → San Martín) y una Resolución Directoral.
+- **Disciplina:** nombre y abreviatura (AJD Ajedrez, ATL Atletismo, BSQ Básquet, FTB Fútbol, FTS Futsal, HAN Handball, JUD Judo, NAT Natación, TNM Tenis de mesa, VOL Vóley, PAT por confirmar…).
+- **Categoría:** A, B, C, D, E.
+- **Delegación:** representa a una macrorregión en una disciplina, categoría y género. Tiene entre 3 y 22 integrantes (participantes, entrenador y delegado). Su código se **genera**: `{macro}-{disciplina}-{categoría}-{género}`, p. ej. `M1-AJD-B-D` (D = damas, V = varones). Es único.
+- Cada participante regular pertenece a **una** delegación. Los especiales no tienen delegación.
+
+## 6. Participante
+
+| Campo | Obligatorio | Reglas / origen en el Excel |
+|---|---|---|
+| `id` (UUID) | auto | |
+| `documentType` | sí | `DNI`, `CE` o `PASAPORTE` (la credencial dice "DNI / CE / Pas."). |
+| `documentNumber` | sí | DNI: `^\d{8}$` (conserva los ceros a la izquierda; es texto). CE y pasaporte: `^[A-Za-z0-9]{6,12}$` (SUPUESTO). Único junto con `documentType`. |
+| `firstNames` | sí | NOMBRES |
+| `paternalLastName` | sí | APELLIDO PATERNO |
+| `maternalLastName` | no | APELLIDO MATERNO |
+| `gender` | regular: sí | `FEMENINO` / `MASCULINO` |
+| `birthDate` | regular: sí | FECHA DE NACIMIENTO |
+| `participantTypeId` | sí | CONDICIÓN (ver tabla de equivalencias, P2) |
+| `delegationId` | regulares: sí | DELEGACIÓN |
+| `institution` | especiales: sí | "Servicio / Institución" impreso en la credencial especial |
+| `schoolName`, `schoolModularCode` | no | I.E., COD_MOD |
+| `ugel`, `region`, `province`, `district` | no | UGEL, REGIÓN, PROVINCIA, DISTRITO |
+| `phone`, `email` | no | CELULAR, CORREO ELECTRÓNICO |
+| `disabilityType`, `disabilityClass` | no | TIPO / CLASE DE DISCAPACIDAD (paradeportistas) |
+| `externalId`, `externalDelegateId` | no | ID PERSONAL / ID DE SU DELEGADO en el sistema Mateus (trazabilidad de la importación) |
+| `extraData` (jsonb) | no | PRUEBA 1–4 y MARCA 1–4, y columnas futuras sin campo propio |
+| `status` | auto | §7 |
+| `isActive` | auto | |
+
+**Nunca se importan ni se guardan** las columnas `USUARIO` y `PASSWORD` del Excel: son credenciales de otro sistema (ver §11).
+
+## 7. Estados del participante
+
+`PENDING_DOCUMENTS` → `IN_REVIEW` ⇄ `OBSERVED` → `READY_TO_PRINT` → `PRINTED` → `DELIVERED`
+
+| Estado | Regla operativa (plan §4) |
+|---|---|
+| `PENDING_DOCUMENTS` | Faltan requisitos obligatorios; impresión bloqueada. |
+| `IN_REVIEW` | Documentos recibidos, pendientes de evaluación. |
+| `OBSERVED` | Al menos un requisito obligatorio está observado. |
+| `READY_TO_PRINT` | Todos los requisitos obligatorios están aprobados; se habilita "Imprimir". |
+| `PRINTED` | Se registró la impresión; no implica entrega. |
+| `DELIVERED` | Un usuario confirmó la entrega (lugar, fecha y hora, responsable). |
+
+- El estado documental (`PENDING_DOCUMENTS`, `IN_REVIEW`, `OBSERVED`, `READY_TO_PRINT`) se **recalcula** a partir de los documentos y los requisitos de su tipo, no se edita a mano.
+- Los tipos especiales nacen directamente en `READY_TO_PRINT`.
+- Si un participante ya impreso o entregado recibe una observación, la impresión de duplicados se vuelve a bloquear. Ver P6.
+
+## 8. Credenciales, impresión y QR
+
+- **Soporte:** papel mate de 200 g, preimpreso por una imprenta y ya cortado a **120 × 155 mm**. El sistema **solo imprime los datos variables** sobre el arte: nombres y apellidos, documento, institución o delegación, foto y, en el reverso, el QR.
+- Se genera un **PDF a medida exacta** (120 × 155 mm, página 1 anverso y página 2 reverso con QR), con una plantilla por tipo de participante.
+- **Calibración obligatoria:** las muestras del cliente muestran texto impreso dos veces y desalineado. La plantilla tendrá desplazamientos X/Y configurables y una "hoja de prueba" antes de imprimir en lote.
+- **Original + hasta 3 duplicados** (CONFIRMADO): cada ejemplar (`copyNumber` de 0 a 3) registra su propia impresión (fecha, usuario y motivo si es duplicado) y su propia entrega. Un duplicado no se emite sin motivo.
+- **QR:** contiene una URL de verificación con un **token aleatorio**, sin DNI ni datos personales. Al escanearlo muestra el **estado de la documentación** (CONFIRMADO). Qué ve un usuario sin sesión iniciada está por definir (P5). Nunca expone archivos.
+- Los artes 2026 aún no se han entregado.
+
+## 9. Entrega física — CONFIRMADO
+
+- Acción explícita "Credencial entregada", disponible solo si el ejemplar está impreso.
+- Formulario: lugar de entrega (catálogo) y observación. La fecha, la hora y el usuario se registran automáticamente.
+- Se registra por cada ejemplar: original, duplicado 1, 2 y 3.
+- Lugares iniciales (catálogo editable por ADMIN):
+  1. Local Bros, Magdalena
+  2. IEE Melitón Carvajal, Lince
+  3. Villa Panamericana, VES
+  4. Sede competencia – Videna, San Luis
+  5. Sede competencia – IE Ricardo Palma, Surquillo
+  6. Sede competencia – Polideportivo Luisa Fuentes, VES
+  7. Sede competencia – Complejo Andrés Avelino Cáceres, VMT
+  8. Sede competencia – Complejo Panamericano, San Miguel
+  9. Sede competencia – CAR, Punta Rocas
+  10. Sede competencia – Universidad de Lima, Ate
+  11. Sede competencia – Coliseo FIA, La Molina
+
+## 10. Reportes y exportación
+
+- **Nivel 1** (ADMIN, COORDINADOR): avance por macrorregión y delegación, con "docs. pendientes", "listas para imprimir", "impresas", "entregadas" y "en stock" (impresas no entregadas), como en las hojas *ResumenDocs x Delegación*, *Resumen EntregaCredenciales* y *Avance* del Excel.
+- **Completo** (ADMIN): consolidado por participante, con identificación, delegación, estado de cada documento, habilitación, impresiones y entregas por ejemplar (lugar, fecha y hora, responsable, observación). Exportable a Excel con los filtros aplicados.
+- **Auditoría** (ADMIN): filtros por participante, usuario, fecha y tipo de acción. Cada registro guarda el campo afectado, el valor anterior y el nuevo.
+
+## 11. Seguridad y datos personales
+
+- Se tratan datos de **menores** y **datos de salud** (certificado médico y de discapacidad), que son sensibles según la Ley 29733 de protección de datos personales.
+- Los archivos se guardan en **Cloudinary** (exigido por el plan) con entrega **privada** (`type: authenticated`) y URLs firmadas de corta duración. Nunca URLs públicas.
+- **El Excel del cliente contiene usuarios y contraseñas en texto plano** de unos 2.700 participantes (columnas `USUARIO` y `PASSWORD`, hoja *ID GENERAL*). El importador descarta esas columnas y nunca las registra en logs ni en la auditoría. Se recomienda al cliente no seguir circulando ese archivo y cambiar esas contraseñas (P9).
+
+## 12. Fuera del alcance del plan original
+
+El plan v1.0 no incluye lo siguiente, que el cliente pidió en sus respuestas. Debe acordarse el impacto en el cronograma de 4 semanas:
+
+1. **Diplomas:** impresión de datos sobre un diploma preimpreso.
+2. **Hasta 3 duplicados** con entrega independiente por ejemplar.
+3. **Credenciales especiales:** cuatro tipos sin documentos, con permiso propio.
+4. **Delegaciones y macrorregiones** con código generado.
+
+## 13. Contrato de la API — Sprint 1
 
 Convenciones:
 
-- Base: `/api`. Autenticación: `Authorization: Bearer <token>`, salvo en las rutas marcadas como *Pública*.
-- Listados paginados: `?page=1&limit=20` (máximo 100) → `{ data, meta: { page, limit, total, totalPages } }`.
+- Base: `/api`, con `Authorization: Bearer <token>` salvo en las rutas *Públicas*.
+- Paginación: `?page=1&limit=20` (máximo 100) → `{ data, meta: { page, limit, total, totalPages } }`.
 - Errores: `{ statusCode, message, error, path, timestamp }`.
-- Activar o desactivar: `PATCH /:id/active` con el cuerpo `{ "isActive": boolean }`.
-- La documentación interactiva está en `/docs` (fuera de producción).
+- Activar o desactivar: `PATCH /:id/active` con `{ "isActive": boolean }`.
 
-### Sistema y autenticación
+| Método | Ruta | Rol |
+|---|---|---|
+| GET | `/api/health` | Pública |
+| POST | `/api/auth/login` | Pública (límite estricto de intentos) |
+| GET | `/api/auth/me` | Autenticado |
+| GET · POST · PATCH | `/api/users`, `/api/users/:id`, `/api/users/:id/active` | ADMIN |
+| GET | `/api/roles` | ADMIN |
+| GET | `/api/{catalogo}`, `/api/{catalogo}/:id` | Autenticado |
+| POST · PATCH | `/api/{catalogo}`, `/api/{catalogo}/:id`, `/api/{catalogo}/:id/active` | ADMIN |
+| GET | `/api/delegations`, `/api/delegations/:id` | Autenticado |
+| POST · PATCH | `/api/delegations`, `/api/delegations/:id` | ADMIN, COORDINADOR |
+| GET | `/api/participants` (filtros: `search`, `status`, `participantTypeId`, `delegationId`, `macroRegionId`, `isActive`), `/api/participants/:id` | Autenticado |
+| POST · PATCH | `/api/participants`, `/api/participants/:id` | Tipos regulares: ADMIN, COORDINADOR, OPERADOR · tipos especiales: ADMIN, COORDINADOR |
+| PATCH | `/api/participants/:id/active` | ADMIN |
+| GET | `/api/audit-logs` (filtros: `participantId`, `userId`, `action`, `from`, `to`) | ADMIN |
 
-| Método | Ruta | Rol | Descripción |
-|---|---|---|---|
-| GET | `/api/health` | Pública | Estado del servicio y de la BD → `{ status: 'ok' }`. |
-| POST | `/api/auth/login` | Pública | `{ email, password }` → `{ accessToken, user }`. |
-| GET | `/api/auth/me` | Autenticado | Perfil del usuario actual con su rol. |
+Catálogos (`{catalogo}`): `delivery-places`, `participant-types`, `macro-regions`, `sports`, `document-types` y `document-requirements`.
 
-### Usuarios y roles
-
-| Método | Ruta | Rol | Descripción |
-|---|---|---|---|
-| GET | `/api/users` | ADMIN | Listado paginado. |
-| GET | `/api/users/:id` | ADMIN | Detalle. |
-| POST | `/api/users` | ADMIN | Crear `{ email, fullName, password, roleId }`. |
-| PATCH | `/api/users/:id` | ADMIN | Editar datos y rol. |
-| PATCH | `/api/users/:id/active` | ADMIN | Activar o desactivar. |
-| GET | `/api/roles` | ADMIN | Listar roles. |
-
-### Catálogos
-
-| Método | Ruta | Rol | Descripción |
-|---|---|---|---|
-| GET | `/api/delivery-places` | Autenticado | Listado paginado. |
-| GET | `/api/delivery-places/:id` | Autenticado | Detalle. |
-| POST | `/api/delivery-places` | ADMIN | Crear. |
-| PATCH | `/api/delivery-places/:id` | ADMIN | Editar. |
-| PATCH | `/api/delivery-places/:id/active` | ADMIN | Activar o desactivar. |
-| GET | `/api/participant-types` | Autenticado | Listado paginado. |
-| GET | `/api/participant-types/:id` | Autenticado | Detalle. |
-| POST | `/api/participant-types` | ADMIN | Crear. |
-| PATCH | `/api/participant-types/:id` | ADMIN | Editar. |
-| PATCH | `/api/participant-types/:id/active` | ADMIN | Activar o desactivar. |
-
-### Participantes
-
-| Método | Ruta | Rol | Descripción |
-|---|---|---|---|
-| GET | `/api/participants` | Autenticado | Listado paginado. Filtros: `search` (DNI o nombre), `status`, `participantTypeId`, `isActive`. |
-| GET | `/api/participants/:id` | Autenticado | Detalle. |
-| POST | `/api/participants` | ADMIN, REVISOR | Crear (estado inicial `PENDING_DOCUMENTS`). |
-| PATCH | `/api/participants/:id` | ADMIN, REVISOR | Editar datos (no el `status`). |
-| PATCH | `/api/participants/:id/active` | ADMIN | Activar o desactivar. |
-
-### Auditoría
-
-| Método | Ruta | Rol | Descripción |
-|---|---|---|---|
-| GET | `/api/audit-logs` | ADMIN | Listado paginado. Filtros: `entity`, `entityId`, `action`, `userId`, `from`, `to`. |
-
-Cada operación de escritura de este contrato genera un registro de auditoría con: usuario, acción, entidad, id de la entidad, cambios (sin contraseñas ni hashes) y fecha.
+Sprints siguientes: importación Excel (preview y commit), documentos y revisión, credenciales (PDF, QR, duplicados), entregas, diplomas, reportes y exportación.
