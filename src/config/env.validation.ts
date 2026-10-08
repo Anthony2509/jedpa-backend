@@ -11,7 +11,13 @@ export const envValidationSchema = Joi.object({
   DB_NAME: Joi.string().required(),
 
   JWT_SECRET: Joi.string().min(32).required(),
-  JWT_EXPIRES_IN: Joi.string().default('8h'),
+  JWT_EXPIRES_IN: Joi.string()
+    .pattern(/^\d+[smhd]$/)
+    .default('8h')
+    .messages({
+      'string.pattern.base':
+        'JWT_EXPIRES_IN debe tener el formato 8h, 30m, 1d...',
+    }),
 
   FRONTEND_URL: Joi.string()
     .uri({ scheme: ['http', 'https'] })

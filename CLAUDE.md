@@ -27,7 +27,7 @@ NestJS · TypeScript · TypeORM · PostgreSQL 16 (Docker, `docker-compose.yml`) 
 ## 4. Reglas de seguridad
 
 - Contraseñas con bcrypt. **Nunca** devolver `passwordHash` (ni en respuestas ni en relaciones).
-- Todas las rutas protegidas por JWT, salvo las marcadas con `@Public()`.
+- Todas las rutas protegidas por JWT (guard global), salvo las marcadas con `@Public()`. Restringir por rol con `@Roles(ROLES.ADMIN, ...)`; obtener el usuario con `@CurrentUser()`.
 - Sin borrado físico en entidades de negocio: usar `isActive`.
 - No registrar datos personales en logs (DNI, nombres, teléfonos, fechas de nacimiento, documentos).
 - El documento de identidad es `documentType` (`DNI` | `CE` | `PASAPORTE`) + `documentNumber` (texto: conserva los ceros a la izquierda). Nunca asumir que todo es DNI.

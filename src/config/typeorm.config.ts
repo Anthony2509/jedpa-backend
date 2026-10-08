@@ -11,6 +11,7 @@ export const typeOrmConfigFactory = (
   username: config.getOrThrow<string>('DB_USER'),
   password: config.getOrThrow<string>('DB_PASSWORD'),
   database: config.getOrThrow<string>('DB_NAME'),
-  autoLoadEntities: true,
+  // Todas las entidades (las relaciones cruzan módulos), igual que la CLI de migraciones.
+  entities: [`${__dirname}/../**/*.entity.{ts,js}`],
   // El esquema se gestiona con migraciones, nunca con synchronize.
 });
