@@ -1,6 +1,12 @@
 import request from 'supertest';
-import { E2E_ADMIN } from './e2e-env';
-import { catalogId, createTestApp, loginAs, TestApp } from './e2e-utils';
+import {
+  E2E_ADMIN,
+  TestApp,
+  catalogId,
+  createTestApp,
+  loginAs,
+  devUser,
+} from './e2e-utils';
 
 type Role = 'ADMIN' | 'COORDINADOR' | 'OPERADOR';
 type Auth = { Authorization: string };
@@ -21,19 +27,7 @@ describe('Matriz de permisos (e2e)', () => {
     auth.ADMIN = await loginAs(app, E2E_ADMIN.email, E2E_ADMIN.password);
 
     for (const role of ['COORDINADOR', 'OPERADOR'] as const) {
-      const email = `${role.toLowerCase()}@permisos.test`;
-      const password = `${role}-Clave-2026`;
-      const roleId = await catalogId(app, auth.ADMIN, 'roles', role);
-      await request(app.getHttpServer())
-        .post('/api/users')
-        .set(auth.ADMIN)
-        .send({
-          email,
-          fullName: role,
-          password,
-          roleId,
-        })
-        .expect(201);
+      const { email, password } = devUser(role);
       auth[role] = await loginAs(app, email, password);
     }
 

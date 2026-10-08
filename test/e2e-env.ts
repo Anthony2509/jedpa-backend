@@ -19,8 +19,3 @@ if (!process.env.DB_NAME.endsWith('_test')) {
     `Las pruebas e2e solo corren sobre una base *_test (recibido: ${process.env.DB_NAME}).`,
   );
 }
-
-export const E2E_ADMIN = {
-  email: 'admin@e2e.test',
-  password: 'AdminE2E-Clave-2026',
-};

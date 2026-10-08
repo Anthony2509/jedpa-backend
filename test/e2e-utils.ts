@@ -4,8 +4,21 @@ import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from '../src/app.module';
 import { configureApp } from '../src/app.setup';
+import { RoleName, ROLES } from '../src/common/constants/roles';
+import {
+  DEV_USER_PASSWORD,
+  DEV_USER_SEEDS,
+} from '../src/database/seeds/seed-data';
 
 export type TestApp = INestApplication<App>;
+
+/** Credenciales de los usuarios que crea el seed (uno por rol). */
+export const devUser = (role: RoleName) => ({
+  email: DEV_USER_SEEDS.find((u) => u.role === role)!.email,
+  password: DEV_USER_PASSWORD,
+});
+
+export const E2E_ADMIN = devUser(ROLES.ADMIN);
 
 /** Levanta la app con la misma configuración HTTP que main.ts. */
 export async function createTestApp(): Promise<TestApp> {

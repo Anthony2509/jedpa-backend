@@ -1,12 +1,11 @@
 import dataSource from '../data-source';
-import { runSeed, validateSeedEnv } from './seed-runner';
+import { runSeed } from './seed-runner';
 
 /** CLI: npm run seed */
 async function main(): Promise<void> {
-  const env = validateSeedEnv(process.env);
   await dataSource.initialize();
   try {
-    await runSeed(dataSource, env);
+    await runSeed(dataSource);
     console.log('Seed completado.');
   } finally {
     await dataSource.destroy();

@@ -33,7 +33,7 @@ NestJS · TypeScript · TypeORM · PostgreSQL 16 (Docker, `docker-compose.yml`) 
 - El documento de identidad es `documentType` (`DNI` | `CE` | `PASAPORTE`) + `documentNumber` (texto: conserva los ceros a la izquierda). Nunca asumir que todo es DNI.
 - Los archivos (Cloudinary) son **privados**: entrega autenticada y URLs firmadas de corta duración. El QR lleva un token aleatorio, nunca datos personales.
 - Al importar el Excel del cliente, descartar siempre las columnas `USUARIO` y `PASSWORD`: son credenciales de otro sistema.
-- Nunca subir `.env` al repositorio. Toda variable nueva se añade a `.env.example` (sin valores secretos). Las que usa la app se validan con Joi en `src/config/env.validation.ts`; las que usan solo los scripts (p. ej. `SEED_ADMIN_*` del seed) se validan dentro del propio script.
+- Nunca subir `.env` al repositorio. Toda variable nueva se añade a `.env.example` (sin valores secretos). Las que usa la app se validan con Joi en `src/config/env.validation.ts`.
 
 ## 5. Auditoría
 
@@ -58,7 +58,7 @@ Los estados documentales (`PENDING_DOCUMENTS` → `READY_TO_PRINT`) se **calcula
 - Columnas en `snake_case` (`SnakeNamingStrategy`). Los enums de PostgreSQL llevan `enumName` explícito.
 - En QueryBuilder, pasar **siempre** parámetros explícitos (`{ roleId: query.roleId }`), nunca el DTO completo: TypeORM fusiona los parámetros de toda la consulta y uno puede pisar a otro. Escapar las búsquedas con `escapeLike()`.
 - Las columnas `string | null` llevan `type` explícito (`'varchar'`, `'text'`...).
-- `npm run seed` carga roles, catálogos, requisitos y el ADMIN inicial. Es idempotente: nunca sobrescribe datos existentes.
+- `npm run seed` carga roles, catálogos, requisitos y un usuario de desarrollo por rol (`admin@jedpa.local`, `coordinador@jedpa.local`, `operador@jedpa.local`, contraseña `password123`). Es idempotente: nunca sobrescribe datos existentes. Con `NODE_ENV=production` **no** crea esos usuarios: el ADMIN de producción se define en la historia de despliegue.
 
 ## 9. Forma de trabajo
 

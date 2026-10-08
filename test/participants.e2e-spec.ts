@@ -1,7 +1,12 @@
 import request from 'supertest';
 import { DataSource } from 'typeorm';
-import { E2E_ADMIN } from './e2e-env';
-import { catalogId, createTestApp, loginAs, TestApp } from './e2e-utils';
+import {
+  E2E_ADMIN,
+  TestApp,
+  catalogId,
+  createTestApp,
+  loginAs,
+} from './e2e-utils';
 
 interface ParticipantBody {
   id: string;

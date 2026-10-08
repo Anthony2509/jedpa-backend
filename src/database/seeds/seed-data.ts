@@ -6,6 +6,22 @@ import { ROLES } from '../../common/constants/roles';
 
 /** Datos iniciales confirmados por el cliente (docs/SPEC.md). Editables luego por ADMIN. */
 
+/**
+ * Usuarios de DESARROLLO y PRUEBAS: uno por rol, misma contraseña.
+ * El seed no los crea si NODE_ENV=production.
+ */
+export const DEV_USER_PASSWORD = 'password123';
+
+export const DEV_USER_SEEDS = [
+  { email: 'admin@jedpa.local', fullName: 'Administrador', role: ROLES.ADMIN },
+  {
+    email: 'coordinador@jedpa.local',
+    fullName: 'Coordinador',
+    role: ROLES.COORDINATOR,
+  },
+  { email: 'operador@jedpa.local', fullName: 'Operador', role: ROLES.OPERATOR },
+];
+
 export const ROLE_SEEDS = [
   {
     name: ROLES.ADMIN,

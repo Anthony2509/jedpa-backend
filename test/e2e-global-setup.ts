@@ -1,8 +1,9 @@
+// Carga explícita: globalSetup no ejecuta los setupFiles de Jest.
+import './e2e-env';
 import { join } from 'node:path';
 import { DataSource } from 'typeorm';
 import { baseDataSourceOptions } from '../src/database/database.options';
 import { runSeed } from '../src/database/seeds/seed-runner';
-import { E2E_ADMIN } from './e2e-env';
 
 const connection = () => ({
   ...baseDataSourceOptions,
@@ -30,13 +31,6 @@ export default async function globalSetup(): Promise<void> {
   });
   await dataSource.initialize();
   await dataSource.runMigrations();
-  await runSeed(
-    dataSource,
-    {
-      SEED_ADMIN_EMAIL: E2E_ADMIN.email,
-      SEED_ADMIN_PASSWORD: E2E_ADMIN.password,
-    },
-    () => undefined,
-  );
+  await runSeed(dataSource, () => undefined);
   await dataSource.destroy();
 }
