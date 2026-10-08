@@ -1,0 +1,1213 @@
+{
+  "yaakVersion": "2026.2.0",
+  "yaakSchema": 4,
+  "timestamp": "2026-10-08T23:41:00",
+  "resources": {
+    "workspaces": [
+      {
+        "model": "workspace",
+        "id": "wk_JedpaApi01",
+        "name": "JEDPA API",
+        "description": "API del sistema de credenciales JEDPA (NestJS, puerto 4000).\n\n1. Levanta el backend: `docker compose up -d`, `npm run migration:run`, `npm run seed`, `npm run start:dev`.\n2. Elige el entorno **Admin**, **Coordinador** u **Operador** (arriba a la izquierda).\n3. Ejecuta **01 · Autenticación → Login**. El token se aplica solo a todas las peticiones.\n4. Recorre las carpetas en orden (00 → 07).\n\nAl cambiar de entorno, vuelve a ejecutar **Login**.",
+        "authenticationType": "bearer",
+        "authentication": {
+          "token": "${[ response.body.path(request='rq_JdpLogin01', behavior='ttl', ttl='25200', path='$.accessToken') ]}"
+        },
+        "headers": [],
+        "settingValidateCertificates": true,
+        "settingFollowRedirects": true,
+        "settingRequestTimeout": 0
+      }
+    ],
+    "environments": [
+      {
+        "model": "environment",
+        "id": "ev_JdpGlobal1",
+        "workspaceId": "wk_JedpaApi01",
+        "name": "Global Variables",
+        "parentModel": "workspace",
+        "parentId": null,
+        "public": true,
+        "variables": [
+          {
+            "name": "baseUrl",
+            "value": "http://localhost:4000/api",
+            "enabled": true
+          },
+          {
+            "name": "password",
+            "value": "password123",
+            "enabled": true
+          },
+          {
+            "name": "email",
+            "value": "admin@jedpa.local",
+            "enabled": true
+          }
+        ]
+      },
+      {
+        "model": "environment",
+        "id": "ev_JdpAdmin01",
+        "workspaceId": "wk_JedpaApi01",
+        "name": "Admin",
+        "parentModel": "environment",
+        "parentId": null,
+        "public": true,
+        "variables": [
+          {
+            "name": "email",
+            "value": "admin@jedpa.local",
+            "enabled": true
+          }
+        ]
+      },
+      {
+        "model": "environment",
+        "id": "ev_JdpCoord01",
+        "workspaceId": "wk_JedpaApi01",
+        "name": "Coordinador",
+        "parentModel": "environment",
+        "parentId": null,
+        "public": true,
+        "variables": [
+          {
+            "name": "email",
+            "value": "coordinador@jedpa.local",
+            "enabled": true
+          }
+        ]
+      },
+      {
+        "model": "environment",
+        "id": "ev_JdpOper001",
+        "workspaceId": "wk_JedpaApi01",
+        "name": "Operador",
+        "parentModel": "environment",
+        "parentId": null,
+        "public": true,
+        "variables": [
+          {
+            "name": "email",
+            "value": "operador@jedpa.local",
+            "enabled": true
+          }
+        ]
+      }
+    ],
+    "folders": [
+      {
+        "model": "folder",
+        "id": "fl_JdpFold01",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": null,
+        "name": "00 · Sistema",
+        "description": "Estado del servicio.",
+        "sortPriority": 1000,
+        "headers": [],
+        "authentication": {},
+        "authenticationType": null
+      },
+      {
+        "model": "folder",
+        "id": "fl_JdpFold02",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": null,
+        "name": "01 · Autenticación",
+        "description": "El token de **Login** lo usan todas las peticiones (heredado del workspace).",
+        "sortPriority": 2000,
+        "headers": [],
+        "authentication": {},
+        "authenticationType": null
+      },
+      {
+        "model": "folder",
+        "id": "fl_JdpFold03",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": null,
+        "name": "02 · Usuarios y roles (ADMIN)",
+        "description": "Solo ADMIN. Otros roles reciben **403**.",
+        "sortPriority": 3000,
+        "headers": [],
+        "authentication": {},
+        "authenticationType": null
+      },
+      {
+        "model": "folder",
+        "id": "fl_JdpFold04",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": null,
+        "name": "03 · Catálogos",
+        "description": "Lectura: cualquier usuario autenticado. Escritura (lugares de entrega): solo ADMIN.",
+        "sortPriority": 4000,
+        "headers": [],
+        "authentication": {},
+        "authenticationType": null
+      },
+      {
+        "model": "folder",
+        "id": "fl_JdpFold05",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": null,
+        "name": "04 · Delegaciones",
+        "description": "Lectura: cualquiera. Crear/editar: ADMIN y COORDINADOR. El código M1-AJD-B-D se genera solo.",
+        "sortPriority": 5000,
+        "headers": [],
+        "authentication": {},
+        "authenticationType": null
+      },
+      {
+        "model": "folder",
+        "id": "fl_JdpFold06",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": null,
+        "name": "05 · Participantes",
+        "description": "Lectura: cualquiera. Crear/editar regulares: los 3 roles. Especiales: ADMIN y COORDINADOR. Activar/desactivar: ADMIN.",
+        "sortPriority": 6000,
+        "headers": [],
+        "authentication": {},
+        "authenticationType": null
+      },
+      {
+        "model": "folder",
+        "id": "fl_JdpFold07",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": null,
+        "name": "06 · Auditoría (ADMIN)",
+        "description": "Historial de solo lectura. Solo ADMIN.",
+        "sortPriority": 7000,
+        "headers": [],
+        "authentication": {},
+        "authenticationType": null
+      },
+      {
+        "model": "folder",
+        "id": "fl_JdpFold08",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": null,
+        "name": "07 · Errores esperados",
+        "description": "Cada petición debe FALLAR con el código indicado: comprueba las reglas y mensajes.",
+        "sortPriority": 8000,
+        "headers": [],
+        "authentication": {},
+        "authenticationType": null
+      }
+    ],
+    "httpRequests": [
+      {
+        "model": "http_request",
+        "id": "rq_JdpReq0001",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold01",
+        "name": "Health",
+        "description": "Público. Ejecuta `SELECT 1` en la BD. Esperado: **200** `{ \"status\": \"ok\" }`.",
+        "method": "GET",
+        "url": "${[ baseUrl ]}/health",
+        "urlParameters": [],
+        "headers": [],
+        "bodyType": null,
+        "body": {},
+        "authenticationType": "none",
+        "authentication": {},
+        "sortPriority": 1
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpLogin01",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold02",
+        "name": "Login",
+        "description": "Inicia sesión con el usuario del **entorno activo** (Admin / Coordinador / Operador).\n\n⚠️ Al cambiar de entorno, **vuelve a ejecutar Login** para usar ese rol.\n\nEsperado: **200** con `accessToken` y `user`. Máximo 5 intentos por minuto (luego 429).",
+        "method": "POST",
+        "url": "${[ baseUrl ]}/auth/login",
+        "urlParameters": [],
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json",
+            "enabled": true
+          }
+        ],
+        "bodyType": "application/json",
+        "body": {
+          "text": "{\n  \"email\": \"${[ email ]}\",\n  \"password\": \"${[ password ]}\"\n}"
+        },
+        "authenticationType": "none",
+        "authentication": {},
+        "sortPriority": 1
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpReq0002",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold02",
+        "name": "Mi perfil",
+        "description": "Usuario autenticado y su rol. Esperado: **200**.",
+        "method": "GET",
+        "url": "${[ baseUrl ]}/auth/me",
+        "urlParameters": [],
+        "headers": [],
+        "bodyType": null,
+        "body": {},
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 2
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpRoles01",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold03",
+        "name": "Listar roles",
+        "description": "ADMIN, COORDINADOR y OPERADOR.",
+        "method": "GET",
+        "url": "${[ baseUrl ]}/roles",
+        "urlParameters": [],
+        "headers": [],
+        "bodyType": null,
+        "body": {},
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 1
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpReq0003",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold03",
+        "name": "Listar usuarios",
+        "description": "Paginado. Activa los filtros opcionales en la pestaña de parámetros.",
+        "method": "GET",
+        "url": "${[ baseUrl ]}/users",
+        "urlParameters": [
+          {
+            "name": "page",
+            "value": "1",
+            "enabled": true
+          },
+          {
+            "name": "limit",
+            "value": "20",
+            "enabled": true
+          },
+          {
+            "name": "search",
+            "value": "",
+            "enabled": false
+          },
+          {
+            "name": "isActive",
+            "value": "true",
+            "enabled": false
+          },
+          {
+            "name": "roleId",
+            "value": "",
+            "enabled": false
+          }
+        ],
+        "headers": [],
+        "bodyType": null,
+        "body": {},
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 2
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpUserC01",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold03",
+        "name": "Crear usuario",
+        "description": "Crea un OPERADOR con correo aleatorio. Contraseña: mínimo 12 caracteres con letras y números.\n\nEsperado: **201** (nunca devuelve `passwordHash`).",
+        "method": "POST",
+        "url": "${[ baseUrl ]}/users",
+        "urlParameters": [],
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json",
+            "enabled": true
+          }
+        ],
+        "bodyType": "application/json",
+        "body": {
+          "text": "{\n  \"email\": \"usuario${[ random.range(min='10000', max='99999', decimals='0') ]}@jedpa.local\",\n  \"fullName\": \"Usuario de prueba\",\n  \"password\": \"ClaveSegura2026\",\n  \"roleId\": \"${[ response.body.path(request='rq_JdpRoles01', behavior='smart', path='$[?(@.name==\"OPERADOR\")].id') ]}\"\n}"
+        },
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 3
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpReq0004",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold03",
+        "name": "Ver usuario creado",
+        "description": "Usa el id de la última respuesta de **Crear usuario**.",
+        "method": "GET",
+        "url": "${[ baseUrl ]}/users/${[ response.body.path(request='rq_JdpUserC01', path='$.id') ]}",
+        "urlParameters": [],
+        "headers": [],
+        "bodyType": null,
+        "body": {},
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 4
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpReq0005",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold03",
+        "name": "Editar usuario creado",
+        "description": "Queda auditado con el valor anterior y el nuevo.",
+        "method": "PATCH",
+        "url": "${[ baseUrl ]}/users/${[ response.body.path(request='rq_JdpUserC01', path='$.id') ]}",
+        "urlParameters": [],
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json",
+            "enabled": true
+          }
+        ],
+        "bodyType": "application/json",
+        "body": {
+          "text": "{\n  \"fullName\": \"Usuario de prueba (editado)\"\n}"
+        },
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 5
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpReq0006",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold03",
+        "name": "Desactivar usuario creado",
+        "description": "Su sesión deja de funcionar al instante.",
+        "method": "PATCH",
+        "url": "${[ baseUrl ]}/users/${[ response.body.path(request='rq_JdpUserC01', path='$.id') ]}/active",
+        "urlParameters": [],
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json",
+            "enabled": true
+          }
+        ],
+        "bodyType": "application/json",
+        "body": {
+          "text": "{\n  \"isActive\": false\n}"
+        },
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 6
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpReq0007",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold03",
+        "name": "Reactivar usuario creado",
+        "description": "",
+        "method": "PATCH",
+        "url": "${[ baseUrl ]}/users/${[ response.body.path(request='rq_JdpUserC01', path='$.id') ]}/active",
+        "urlParameters": [],
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json",
+            "enabled": true
+          }
+        ],
+        "bodyType": "application/json",
+        "body": {
+          "text": "{\n  \"isActive\": true\n}"
+        },
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 7
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpPTypes1",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold04",
+        "name": "Tipos de participante",
+        "description": "8 tipos: 4 REGULAR y 4 SPECIAL.",
+        "method": "GET",
+        "url": "${[ baseUrl ]}/participant-types",
+        "urlParameters": [
+          {
+            "name": "includeInactive",
+            "value": "true",
+            "enabled": false
+          }
+        ],
+        "headers": [],
+        "bodyType": null,
+        "body": {},
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 1
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpMacros1",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold04",
+        "name": "Macrorregiones",
+        "description": "M1 … M8.",
+        "method": "GET",
+        "url": "${[ baseUrl ]}/macro-regions",
+        "urlParameters": [],
+        "headers": [],
+        "bodyType": null,
+        "body": {},
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 2
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpSports1",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold04",
+        "name": "Disciplinas",
+        "description": "Abreviaturas usadas en el código de delegación.",
+        "method": "GET",
+        "url": "${[ baseUrl ]}/sports",
+        "urlParameters": [],
+        "headers": [],
+        "bodyType": null,
+        "body": {},
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 3
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpReq0008",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold04",
+        "name": "Tipos de documento",
+        "description": "",
+        "method": "GET",
+        "url": "${[ baseUrl ]}/document-types",
+        "urlParameters": [],
+        "headers": [],
+        "bodyType": null,
+        "body": {},
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 4
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpReq0009",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold04",
+        "name": "Requisitos del Deportista",
+        "description": "Documentos obligatorios por tipo. Quita el filtro para ver todos.",
+        "method": "GET",
+        "url": "${[ baseUrl ]}/document-requirements",
+        "urlParameters": [
+          {
+            "name": "participantTypeId",
+            "value": "${[ response.body.path(request='rq_JdpPTypes1', behavior='smart', path='$[?(@.code==\"DEPORTISTA\")].id') ]}",
+            "enabled": true
+          }
+        ],
+        "headers": [],
+        "bodyType": null,
+        "body": {},
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 5
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpReq0010",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold04",
+        "name": "Lugares de entrega",
+        "description": "Los 11 lugares confirmados por el cliente.",
+        "method": "GET",
+        "url": "${[ baseUrl ]}/delivery-places",
+        "urlParameters": [
+          {
+            "name": "includeInactive",
+            "value": "true",
+            "enabled": false
+          }
+        ],
+        "headers": [],
+        "bodyType": null,
+        "body": {},
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 6
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpPlaceC1",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold04",
+        "name": "Crear lugar de entrega",
+        "description": "Solo ADMIN. Nombre único sin distinguir mayúsculas (409 si se repite).",
+        "method": "POST",
+        "url": "${[ baseUrl ]}/delivery-places",
+        "urlParameters": [],
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json",
+            "enabled": true
+          }
+        ],
+        "bodyType": "application/json",
+        "body": {
+          "text": "{\n  \"name\": \"Sede de prueba ${[ random.range(min='1000', max='9999', decimals='0') ]}\"\n}"
+        },
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 7
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpReq0011",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold04",
+        "name": "Renombrar lugar creado",
+        "description": "",
+        "method": "PATCH",
+        "url": "${[ baseUrl ]}/delivery-places/${[ response.body.path(request='rq_JdpPlaceC1', path='$.id') ]}",
+        "urlParameters": [],
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json",
+            "enabled": true
+          }
+        ],
+        "bodyType": "application/json",
+        "body": {
+          "text": "{\n  \"name\": \"Sede de prueba editada ${[ random.range(min='1000', max='9999', decimals='0') ]}\"\n}"
+        },
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 8
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpReq0012",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold04",
+        "name": "Desactivar lugar creado",
+        "description": "",
+        "method": "PATCH",
+        "url": "${[ baseUrl ]}/delivery-places/${[ response.body.path(request='rq_JdpPlaceC1', path='$.id') ]}/active",
+        "urlParameters": [],
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json",
+            "enabled": true
+          }
+        ],
+        "bodyType": "application/json",
+        "body": {
+          "text": "{\n  \"isActive\": false\n}"
+        },
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 9
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpReq0013",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold05",
+        "name": "Crear delegación M1-AJD-B-D",
+        "description": "M1 · Ajedrez · categoría B · Damas. La segunda vez responde **409** (ya existe): es lo esperado.",
+        "method": "POST",
+        "url": "${[ baseUrl ]}/delegations",
+        "urlParameters": [],
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json",
+            "enabled": true
+          }
+        ],
+        "bodyType": "application/json",
+        "body": {
+          "text": "{\n  \"macroRegionId\": \"${[ response.body.path(request='rq_JdpMacros1', behavior='smart', path='$[?(@.code==\"M1\")].id') ]}\",\n  \"sportId\": \"${[ response.body.path(request='rq_JdpSports1', behavior='smart', path='$[?(@.code==\"AJD\")].id') ]}\",\n  \"category\": \"B\",\n  \"gender\": \"D\"\n}"
+        },
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 1
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpReq0014",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold05",
+        "name": "Listar delegaciones",
+        "description": "",
+        "method": "GET",
+        "url": "${[ baseUrl ]}/delegations",
+        "urlParameters": [
+          {
+            "name": "page",
+            "value": "1",
+            "enabled": true
+          },
+          {
+            "name": "limit",
+            "value": "20",
+            "enabled": true
+          },
+          {
+            "name": "search",
+            "value": "M1",
+            "enabled": false
+          },
+          {
+            "name": "category",
+            "value": "B",
+            "enabled": false
+          },
+          {
+            "name": "gender",
+            "value": "D",
+            "enabled": false
+          }
+        ],
+        "headers": [],
+        "bodyType": null,
+        "body": {},
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 2
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpDelegF1",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold05",
+        "name": "Buscar M1-AJD-B-D",
+        "description": "Los participantes de este workspace usan esta delegación.",
+        "method": "GET",
+        "url": "${[ baseUrl ]}/delegations",
+        "urlParameters": [
+          {
+            "name": "search",
+            "value": "M1-AJD-B-D",
+            "enabled": true
+          }
+        ],
+        "headers": [],
+        "bodyType": null,
+        "body": {},
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 3
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpPartC01",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold06",
+        "name": "Crear deportista",
+        "description": "DNI aleatorio. Requiere haber creado la delegación M1-AJD-B-D (carpeta 04). Esperado: **201** en `PENDING_DOCUMENTS`.",
+        "method": "POST",
+        "url": "${[ baseUrl ]}/participants",
+        "urlParameters": [],
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json",
+            "enabled": true
+          }
+        ],
+        "bodyType": "application/json",
+        "body": {
+          "text": "{\n  \"documentType\": \"DNI\",\n  \"documentNumber\": \"${[ random.range(min='10000000', max='99999999', decimals='0') ]}\",\n  \"firstNames\": \"Juan Carlos\",\n  \"paternalLastName\": \"Pérez\",\n  \"maternalLastName\": \"Quispe\",\n  \"gender\": \"MALE\",\n  \"birthDate\": \"2012-05-20\",\n  \"participantTypeId\": \"${[ response.body.path(request='rq_JdpPTypes1', behavior='smart', path='$[?(@.code==\"DEPORTISTA\")].id') ]}\",\n  \"delegationId\": \"${[ response.body.path(request='rq_JdpDelegF1', behavior='smart', path='$.data[0].id') ]}\",\n  \"schoolName\": \"IE San Martín de Porres\",\n  \"phone\": \"987654321\",\n  \"extraData\": {\n    \"prueba1\": \"Ajedrez rápido\"\n  }\n}"
+        },
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 1
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpPartS01",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold06",
+        "name": "Crear invitado (especial)",
+        "description": "Especiales: sin delegación, institución obligatoria, nacen en `READY_TO_PRINT`. Con el entorno **Operador** responde **403**.",
+        "method": "POST",
+        "url": "${[ baseUrl ]}/participants",
+        "urlParameters": [],
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json",
+            "enabled": true
+          }
+        ],
+        "bodyType": "application/json",
+        "body": {
+          "text": "{\n  \"documentType\": \"PASAPORTE\",\n  \"documentNumber\": \"AB${[ random.range(min='100000', max='999999', decimals='0') ]}\",\n  \"firstNames\": \"Ana\",\n  \"paternalLastName\": \"Ruiz\",\n  \"participantTypeId\": \"${[ response.body.path(request='rq_JdpPTypes1', behavior='smart', path='$[?(@.code==\"INVITADO\")].id') ]}\",\n  \"institution\": \"DRE Ucayali\"\n}"
+        },
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 2
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpReq0015",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold06",
+        "name": "Listar participantes",
+        "description": "Activa los filtros que quieras probar.",
+        "method": "GET",
+        "url": "${[ baseUrl ]}/participants",
+        "urlParameters": [
+          {
+            "name": "page",
+            "value": "1",
+            "enabled": true
+          },
+          {
+            "name": "limit",
+            "value": "20",
+            "enabled": true
+          },
+          {
+            "name": "search",
+            "value": "perez juan",
+            "enabled": false
+          },
+          {
+            "name": "status",
+            "value": "PENDING_DOCUMENTS",
+            "enabled": false
+          },
+          {
+            "name": "participantTypeId",
+            "value": "${[ response.body.path(request='rq_JdpPTypes1', behavior='smart', path='$[?(@.code==\"DEPORTISTA\")].id') ]}",
+            "enabled": false
+          },
+          {
+            "name": "delegationId",
+            "value": "${[ response.body.path(request='rq_JdpDelegF1', behavior='smart', path='$.data[0].id') ]}",
+            "enabled": false
+          },
+          {
+            "name": "macroRegionId",
+            "value": "${[ response.body.path(request='rq_JdpMacros1', behavior='smart', path='$[?(@.code==\"M1\")].id') ]}",
+            "enabled": false
+          },
+          {
+            "name": "isActive",
+            "value": "true",
+            "enabled": false
+          }
+        ],
+        "headers": [],
+        "bodyType": null,
+        "body": {},
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 3
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpReq0016",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold06",
+        "name": "Buscar sin tildes (\"perez juan\")",
+        "description": "Encuentra \"Pérez\" aunque no escribas la tilde. Cada palabra debe coincidir.",
+        "method": "GET",
+        "url": "${[ baseUrl ]}/participants",
+        "urlParameters": [
+          {
+            "name": "search",
+            "value": "perez juan",
+            "enabled": true
+          }
+        ],
+        "headers": [],
+        "bodyType": null,
+        "body": {},
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 4
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpReq0017",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold06",
+        "name": "Ver deportista creado",
+        "description": "",
+        "method": "GET",
+        "url": "${[ baseUrl ]}/participants/${[ response.body.path(request='rq_JdpPartC01', path='$.id') ]}",
+        "urlParameters": [],
+        "headers": [],
+        "bodyType": null,
+        "body": {},
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 5
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpReq0018",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold06",
+        "name": "Editar deportista creado",
+        "description": "`null` vacía un campo opcional. El `status` no se puede enviar (400).",
+        "method": "PATCH",
+        "url": "${[ baseUrl ]}/participants/${[ response.body.path(request='rq_JdpPartC01', path='$.id') ]}",
+        "urlParameters": [],
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json",
+            "enabled": true
+          }
+        ],
+        "bodyType": "application/json",
+        "body": {
+          "text": "{\n  \"phone\": \"912345678\",\n  \"maternalLastName\": null\n}"
+        },
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 6
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpReq0019",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold06",
+        "name": "Desactivar deportista creado (ADMIN)",
+        "description": "",
+        "method": "PATCH",
+        "url": "${[ baseUrl ]}/participants/${[ response.body.path(request='rq_JdpPartC01', path='$.id') ]}/active",
+        "urlParameters": [],
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json",
+            "enabled": true
+          }
+        ],
+        "bodyType": "application/json",
+        "body": {
+          "text": "{\n  \"isActive\": false\n}"
+        },
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 7
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpReq0020",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold06",
+        "name": "Reactivar deportista creado (ADMIN)",
+        "description": "",
+        "method": "PATCH",
+        "url": "${[ baseUrl ]}/participants/${[ response.body.path(request='rq_JdpPartC01', path='$.id') ]}/active",
+        "urlParameters": [],
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json",
+            "enabled": true
+          }
+        ],
+        "bodyType": "application/json",
+        "body": {
+          "text": "{\n  \"isActive\": true\n}"
+        },
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 8
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpReq0021",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold07",
+        "name": "Historial general",
+        "description": "Más reciente primero. Fechas en hora de Perú.",
+        "method": "GET",
+        "url": "${[ baseUrl ]}/audit-logs",
+        "urlParameters": [
+          {
+            "name": "page",
+            "value": "1",
+            "enabled": true
+          },
+          {
+            "name": "limit",
+            "value": "20",
+            "enabled": true
+          },
+          {
+            "name": "action",
+            "value": "UPDATE",
+            "enabled": false
+          },
+          {
+            "name": "entity",
+            "value": "Participant",
+            "enabled": false
+          },
+          {
+            "name": "from",
+            "value": "2026-10-01",
+            "enabled": false
+          },
+          {
+            "name": "to",
+            "value": "2026-12-31",
+            "enabled": false
+          }
+        ],
+        "headers": [],
+        "bodyType": null,
+        "body": {},
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 1
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpReq0022",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold07",
+        "name": "Historial del deportista creado",
+        "description": "Alta y ediciones con el campo afectado, valor anterior y nuevo, y quién lo hizo.",
+        "method": "GET",
+        "url": "${[ baseUrl ]}/audit-logs",
+        "urlParameters": [
+          {
+            "name": "participantId",
+            "value": "${[ response.body.path(request='rq_JdpPartC01', path='$.id') ]}",
+            "enabled": true
+          }
+        ],
+        "headers": [],
+        "bodyType": null,
+        "body": {},
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 2
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpReq0023",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold08",
+        "name": "401 · Sin token",
+        "description": "Esperado: **401** \"Sesión inválida o expirada.\"",
+        "method": "GET",
+        "url": "${[ baseUrl ]}/auth/me",
+        "urlParameters": [],
+        "headers": [],
+        "bodyType": null,
+        "body": {},
+        "authenticationType": "none",
+        "authentication": {},
+        "sortPriority": 1
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpReq0024",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold08",
+        "name": "401 · Contraseña incorrecta",
+        "description": "Esperado: **401** con mensaje genérico. Cuenta para el límite de 5 intentos por minuto.",
+        "method": "POST",
+        "url": "${[ baseUrl ]}/auth/login",
+        "urlParameters": [],
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json",
+            "enabled": true
+          }
+        ],
+        "bodyType": "application/json",
+        "body": {
+          "text": "{\n  \"email\": \"${[ email ]}\",\n  \"password\": \"incorrecta\"\n}"
+        },
+        "authenticationType": "none",
+        "authentication": {},
+        "sortPriority": 2
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpReq0025",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold08",
+        "name": "400 · Campo no permitido",
+        "description": "Esperado: **400** \"El campo status no está permitido.\" y los campos obligatorios faltantes.",
+        "method": "POST",
+        "url": "${[ baseUrl ]}/participants",
+        "urlParameters": [],
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json",
+            "enabled": true
+          }
+        ],
+        "bodyType": "application/json",
+        "body": {
+          "text": "{\n  \"status\": \"DELIVERED\"\n}"
+        },
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 3
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpReq0026",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold08",
+        "name": "400 · DNI inválido",
+        "description": "Esperado: **400** \"El DNI debe tener exactamente 8 dígitos.\"",
+        "method": "POST",
+        "url": "${[ baseUrl ]}/participants",
+        "urlParameters": [],
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json",
+            "enabled": true
+          }
+        ],
+        "bodyType": "application/json",
+        "body": {
+          "text": "{\n  \"documentType\": \"DNI\",\n  \"documentNumber\": \"1234\",\n  \"firstNames\": \"X\",\n  \"paternalLastName\": \"Y\",\n  \"gender\": \"MALE\",\n  \"birthDate\": \"2012-01-01\",\n  \"participantTypeId\": \"${[ response.body.path(request='rq_JdpPTypes1', behavior='smart', path='$[?(@.code==\"DEPORTISTA\")].id') ]}\",\n  \"delegationId\": \"${[ response.body.path(request='rq_JdpDelegF1', behavior='smart', path='$.data[0].id') ]}\"\n}"
+        },
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 4
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpReq0027",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold08",
+        "name": "400 · Deportista sin delegación",
+        "description": "Esperado: **400** con delegación, género y fecha de nacimiento obligatorios.",
+        "method": "POST",
+        "url": "${[ baseUrl ]}/participants",
+        "urlParameters": [],
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json",
+            "enabled": true
+          }
+        ],
+        "bodyType": "application/json",
+        "body": {
+          "text": "{\n  \"documentType\": \"CE\",\n  \"documentNumber\": \"CE123456\",\n  \"firstNames\": \"X\",\n  \"paternalLastName\": \"Y\",\n  \"participantTypeId\": \"${[ response.body.path(request='rq_JdpPTypes1', behavior='smart', path='$[?(@.code==\"DEPORTISTA\")].id') ]}\"\n}"
+        },
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 5
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpReq0028",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold08",
+        "name": "400 · Paginación fuera de rango",
+        "description": "Esperado: **400** (limit máximo 100, page mínimo 1).",
+        "method": "GET",
+        "url": "${[ baseUrl ]}/participants",
+        "urlParameters": [
+          {
+            "name": "limit",
+            "value": "500",
+            "enabled": true
+          },
+          {
+            "name": "page",
+            "value": "0",
+            "enabled": true
+          }
+        ],
+        "headers": [],
+        "bodyType": null,
+        "body": {},
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 6
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpReq0029",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold08",
+        "name": "404 · Participante inexistente",
+        "description": "",
+        "method": "GET",
+        "url": "${[ baseUrl ]}/participants/00000000-0000-4000-8000-000000000000",
+        "urlParameters": [],
+        "headers": [],
+        "bodyType": null,
+        "body": {},
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 7
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpReq0030",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold08",
+        "name": "400 · Id que no es UUID",
+        "description": "Esperado: **400** \"El identificador no es un UUID válido.\"",
+        "method": "GET",
+        "url": "${[ baseUrl ]}/participants/123",
+        "urlParameters": [],
+        "headers": [],
+        "bodyType": null,
+        "body": {},
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 8
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpReq0031",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold08",
+        "name": "403 · Operador lista usuarios",
+        "description": "Usa el entorno **Operador** (y ejecuta Login). Esperado: **403**.",
+        "method": "GET",
+        "url": "${[ baseUrl ]}/users",
+        "urlParameters": [],
+        "headers": [],
+        "bodyType": null,
+        "body": {},
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 9
+      }
+    ],
+    "grpcRequests": [],
+    "websocketRequests": []
+  }
+}
