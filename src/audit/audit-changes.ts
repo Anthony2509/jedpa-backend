@@ -27,11 +27,11 @@ const isRelation = (value: unknown) =>
   !(value instanceof Date) &&
   'id' in value;
 
-/** Cambios de un alta: todos los campos con old = null. */
+/** Cambios de un alta: los campos con valor, con old = null. */
 export function creationChanges(entity: object): AuditChanges {
   const changes: AuditChanges = {};
   for (const [key, value] of Object.entries(entity as Plain)) {
-    if (!isTracked(key) || isRelation(value) || value === undefined) continue;
+    if (!isTracked(key) || isRelation(value) || value == null) continue;
     changes[key] = { old: null, new: normalize(value) };
   }
   return changes;

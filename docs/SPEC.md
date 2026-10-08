@@ -87,7 +87,7 @@ Formatos y tamaños máximos de archivo: **SUPUESTO**, PDF/JPG/PNG de hasta 5 MB
 | `firstNames` | sí | NOMBRES |
 | `paternalLastName` | sí | APELLIDO PATERNO |
 | `maternalLastName` | no | APELLIDO MATERNO |
-| `gender` | regular: sí | `FEMENINO` / `MASCULINO` |
+| `gender` | regular: sí | `FEMALE` / `MALE` (FEMENINO / MASCULINO en el Excel) |
 | `birthDate` | regular: sí | FECHA DE NACIMIENTO |
 | `participantTypeId` | sí | CONDICIÓN (ver tabla de equivalencias, P2) |
 | `delegationId` | regulares: sí | DELEGACIÓN |
@@ -187,8 +187,9 @@ Convenciones:
 | GET | `/api/delivery-places`, `/api/delivery-places/:id`, `/api/participant-types`, `/api/macro-regions`, `/api/sports`, `/api/document-types`, `/api/document-requirements?participantTypeId=` | Autenticado |
 | POST · PATCH | `/api/delivery-places`, `/api/delivery-places/:id`, `/api/delivery-places/:id/active` | ADMIN |
 | GET | `/api/delegations`, `/api/delegations/:id` | Autenticado |
-| POST · PATCH | `/api/delegations`, `/api/delegations/:id` | ADMIN, COORDINADOR |
-| GET | `/api/participants` (filtros: `search`, `status`, `participantTypeId`, `delegationId`, `macroRegionId`, `isActive`), `/api/participants/:id` | Autenticado |
+| POST · PATCH | `/api/delegations`, `/api/delegations/:id` (el código se genera solo) | ADMIN, COORDINADOR |
+| PATCH | `/api/delegations/:id/active` | ADMIN |
+| GET | `/api/participants` (filtros: `search` sin distinguir tildes, cada palabra debe coincidir; `status`, `participantTypeId`, `delegationId`, `macroRegionId`, `isActive`), `/api/participants/:id` | Autenticado |
 | POST · PATCH | `/api/participants`, `/api/participants/:id` | Tipos regulares: ADMIN, COORDINADOR, OPERADOR · tipos especiales: ADMIN, COORDINADOR |
 | PATCH | `/api/participants/:id/active` | ADMIN |
 | GET | `/api/audit-logs` (filtros: `participantId`, `userId`, `action`, `from`, `to`) | ADMIN |

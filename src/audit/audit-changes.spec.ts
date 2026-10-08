@@ -1,7 +1,7 @@
 import { creationChanges, diffChanges } from './audit-changes';
 
 describe('audit-changes', () => {
-  it('creationChanges registra todos los campos con old = null', () => {
+  it('creationChanges registra los campos con valor, con old = null', () => {
     const changes = creationChanges({
       id: 'x',
       createdAt: new Date(),
@@ -10,7 +10,6 @@ describe('audit-changes', () => {
     });
     expect(changes).toEqual({
       firstNames: { old: null, new: 'ANA' },
-      birthDate: { old: null, new: null },
     });
   });
 
