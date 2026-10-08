@@ -184,8 +184,8 @@ Convenciones:
 | GET | `/api/auth/me` | Autenticado |
 | GET · POST · PATCH | `/api/users`, `/api/users/:id`, `/api/users/:id/active` | ADMIN |
 | GET | `/api/roles` | ADMIN |
-| GET | `/api/{catalogo}`, `/api/{catalogo}/:id` | Autenticado |
-| POST · PATCH | `/api/{catalogo}`, `/api/{catalogo}/:id`, `/api/{catalogo}/:id/active` | ADMIN |
+| GET | `/api/delivery-places`, `/api/delivery-places/:id`, `/api/participant-types`, `/api/macro-regions`, `/api/sports`, `/api/document-types`, `/api/document-requirements?participantTypeId=` | Autenticado |
+| POST · PATCH | `/api/delivery-places`, `/api/delivery-places/:id`, `/api/delivery-places/:id/active` | ADMIN |
 | GET | `/api/delegations`, `/api/delegations/:id` | Autenticado |
 | POST · PATCH | `/api/delegations`, `/api/delegations/:id` | ADMIN, COORDINADOR |
 | GET | `/api/participants` (filtros: `search`, `status`, `participantTypeId`, `delegationId`, `macroRegionId`, `isActive`), `/api/participants/:id` | Autenticado |
@@ -193,6 +193,6 @@ Convenciones:
 | PATCH | `/api/participants/:id/active` | ADMIN |
 | GET | `/api/audit-logs` (filtros: `participantId`, `userId`, `action`, `from`, `to`) | ADMIN |
 
-Catálogos (`{catalogo}`): `delivery-places`, `participant-types`, `macro-regions`, `sports`, `document-types` y `document-requirements`.
+Los catálogos devuelven la **lista completa** (sin paginar, pensada para selectores), solo los activos salvo `?includeInactive=true`. En el Sprint 1 solo los lugares de entrega se editan desde la API; los demás se cargan con el seed y su edición llega con el motor de reglas (S2-05).
 
 Sprints siguientes: importación Excel (preview y commit), documentos y revisión, credenciales (PDF, QR, duplicados), entregas, diplomas, reportes y exportación.
