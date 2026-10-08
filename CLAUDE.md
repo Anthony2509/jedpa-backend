@@ -38,7 +38,9 @@ NestJS · TypeScript · TypeORM · PostgreSQL 16 (Docker, `docker-compose.yml`) 
 ## 5. Auditoría
 
 Toda alta, edición, importación, desactivación o cambio de estado se registra en la tabla de auditoría.
-La tabla es **solo inserción** (sin update ni delete) y **nunca** guarda contraseñas ni hashes.
+La tabla es **solo inserción** (un trigger de PostgreSQL bloquea UPDATE, DELETE y TRUNCATE) y **nunca** guarda contraseñas ni hashes.
+
+Uso: dentro de `dataSource.transaction(async (manager) => ...)`, llamar a `auditService.record(manager, actor, { action, entity, entityId, participantId, changes })`. El actor se obtiene con `@Actor()` en el controlador. Los cambios se calculan con `creationChanges(entity)` o `diffChanges(before, after)` de `src/audit/audit-changes.ts`, que ya excluyen las claves sensibles.
 
 ## 6. Roles
 
