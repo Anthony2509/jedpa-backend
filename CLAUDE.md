@@ -50,7 +50,14 @@ Nombres exactos: `PENDING_DOCUMENTS`, `IN_REVIEW`, `OBSERVED`, `READY_TO_PRINT`,
 `PRINTED` y `DELIVERED` son estados distintos: **imprimir nunca marca la entrega**.
 Los estados documentales (`PENDING_DOCUMENTS` → `READY_TO_PRINT`) se **calculan** a partir de los documentos y los requisitos del tipo (`document_requirements`). Los requisitos son datos, no código.
 
-## 8. Forma de trabajo
+## 8. Base de datos
+
+- Esquema **solo por migraciones** (`src/database/migrations`). Tras cambiar una entidad: `npm run migration:generate -- src/database/migrations/NombreDescriptivo`, revisar el SQL generado y luego `npm run migration:run`.
+- Columnas en `snake_case` (`SnakeNamingStrategy`). Los enums de PostgreSQL llevan `enumName` explícito.
+- Las columnas `string | null` llevan `type` explícito (`'varchar'`, `'text'`...).
+- `npm run seed` carga roles, catálogos, requisitos y el ADMIN inicial. Es idempotente: nunca sobrescribe datos existentes.
+
+## 9. Forma de trabajo
 
 - Al terminar cada tarea ejecuta `npm run build` y `npm run lint` y corrige los errores.
 - Resume los archivos creados o modificados y explica cómo probar.
