@@ -56,6 +56,7 @@ Los estados documentales (`PENDING_DOCUMENTS` → `READY_TO_PRINT`) se **calcula
 
 - Esquema **solo por migraciones** (`src/database/migrations`). Tras cambiar una entidad: `npm run migration:generate -- src/database/migrations/NombreDescriptivo`, revisar el SQL generado y luego `npm run migration:run`.
 - Columnas en `snake_case` (`SnakeNamingStrategy`). Los enums de PostgreSQL llevan `enumName` explícito.
+- En QueryBuilder, pasar **siempre** parámetros explícitos (`{ roleId: query.roleId }`), nunca el DTO completo: TypeORM fusiona los parámetros de toda la consulta y uno puede pisar a otro. Escapar las búsquedas con `escapeLike()`.
 - Las columnas `string | null` llevan `type` explícito (`'varchar'`, `'text'`...).
 - `npm run seed` carga roles, catálogos, requisitos y el ADMIN inicial. Es idempotente: nunca sobrescribe datos existentes.
 

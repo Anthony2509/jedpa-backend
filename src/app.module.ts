@@ -14,6 +14,8 @@ import {
 } from './config/env.validation';
 import { typeOrmConfigFactory } from './config/typeorm.config';
 import { HealthModule } from './health/health.module';
+import { RolesModule } from './roles/roles.module';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -35,6 +37,8 @@ import { HealthModule } from './health/health.module';
     HealthModule,
     AuthModule,
     AuditModule,
+    RolesModule,
+    UsersModule,
   ],
   providers: [
     // Orden: límite de peticiones → autenticación → roles.

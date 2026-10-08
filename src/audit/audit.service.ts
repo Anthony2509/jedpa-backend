@@ -60,13 +60,15 @@ export class AuditService {
       .skip(query.skip)
       .take(query.limit);
 
-    if (query.participantId) {
-      qb.andWhere('log.participantId = :participantId', query);
+    // Parámetros siempre explícitos: TypeORM los fusiona a nivel de consulta.
+    const { participantId, userId, action, entity, entityId } = query;
+    if (participantId) {
+      qb.andWhere('log.participantId = :participantId', { participantId });
     }
-    if (query.userId) qb.andWhere('log.userId = :userId', query);
-    if (query.action) qb.andWhere('log.action = :action', query);
-    if (query.entity) qb.andWhere('log.entity = :entity', query);
-    if (query.entityId) qb.andWhere('log.entityId = :entityId', query);
+    if (userId) qb.andWhere('log.userId = :userId', { userId });
+    if (action) qb.andWhere('log.action = :action', { action });
+    if (entity) qb.andWhere('log.entity = :entity', { entity });
+    if (entityId) qb.andWhere('log.entityId = :entityId', { entityId });
     if (query.from) {
       qb.andWhere('log.createdAt >= :from', {
         from: startOfPeruDay(query.from),
