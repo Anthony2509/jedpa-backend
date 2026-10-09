@@ -285,6 +285,122 @@ describe('Documentos y Resolución Directoral (e2e)', () => {
     });
   });
 
+  describe('Revisión', () => {
+    const review = (
+      participantId: string,
+      code: string,
+      body: object,
+      auth: Auth = admin,
+    ) =>
+      request(server())
+        .patch(`/api/participants/${participantId}/documents/${code}/review`)
+        .set(auth)
+        .send(body);
+
+    it('no aprueba un documento sin archivo', () =>
+      review(ids.second, 'SEGURO', { status: 'APPROVED' }).expect(409));
+
+    it('observar exige indicar la observación', () =>
+      review(ids.participant, 'DNI', { status: 'OBSERVED' }).expect(400));
+
+    it('con todos los obligatorios aprobados queda READY_TO_PRINT', async () => {
+      for (const code of ['DNI', 'CERTIFICADO_MEDICO', 'SEGURO']) {
+        await review(
+          ids.participant,
+          code,
+          { status: 'APPROVED' },
+          operator,
+        ).expect(200);
+      }
+      const res = await review(ids.participant, 'FOTO', {
+        status: 'APPROVED',
+      }).expect(200);
+      const checklist = res.body as Checklist;
+      expect(checklist.eligibility).toEqual({
+        status: 'READY_TO_PRINT',
+        documentStatus: 'READY_TO_PRINT',
+        canPrint: true,
+      });
+      expect(item(checklist, 'DNI').reviewedBy).toEqual(
+        expect.objectContaining({ fullName: 'Operador' }),
+      );
+    });
+
+    it('una observación bloquea la impresión y queda visible', async () => {
+      const res = await review(ids.participant, 'CERTIFICADO_MEDICO', {
+        status: 'OBSERVED',
+        observation: 'El certificado está vencido.',
+      }).expect(200);
+      const checklist = res.body as Checklist;
+      expect(checklist.eligibility).toMatchObject({
+        status: 'OBSERVED',
+        canPrint: false,
+      });
+      expect(item(checklist, 'CERTIFICADO_MEDICO')).toMatchObject({
+        status: 'OBSERVED',
+        observation: 'El certificado está vencido.',
+      });
+    });
+
+    it('"no aplica" cuenta como requisito cumplido', async () => {
+      const res = await review(ids.participant, 'CERTIFICADO_MEDICO', {
+        status: 'NOT_APPLICABLE',
+        observation: 'Exonerado por la organización.',
+      }).expect(200);
+      expect((res.body as Checklist).eligibility.status).toBe('READY_TO_PRINT');
+    });
+
+    it('devolver a pendiente lo deja en revisión', async () => {
+      const res = await review(ids.participant, 'CERTIFICADO_MEDICO', {
+        status: 'PENDING',
+      }).expect(200);
+      const checklist = res.body as Checklist;
+      expect(checklist.eligibility.status).toBe('IN_REVIEW');
+      expect(item(checklist, 'CERTIFICADO_MEDICO').reviewedBy).toBeNull();
+    });
+
+    it('reemplazar un archivo aprobado obliga a revisarlo de nuevo', async () => {
+      await review(ids.participant, 'CERTIFICADO_MEDICO', {
+        status: 'APPROVED',
+      }).expect(200);
+      const res = await upload(
+        ids.participant,
+        'DNI',
+        PDF,
+        'dni-nuevo.pdf',
+      ).expect(201);
+      const checklist = res.body as Checklist;
+      expect(item(checklist, 'DNI')).toMatchObject({
+        status: 'PENDING',
+        reviewedBy: null,
+      });
+      expect(checklist.eligibility.status).toBe('IN_REVIEW');
+    });
+
+    it('ADMIN ve el historial de revisiones y cambios de estado', async () => {
+      const reviews = await request(server())
+        .get('/api/audit-logs')
+        .query({ participantId: ids.participant, action: 'DOCUMENT_REVIEW' })
+        .set(admin)
+        .expect(200);
+      expect(
+        (reviews.body as { meta: { total: number } }).meta.total,
+      ).toBeGreaterThanOrEqual(8);
+
+      const statuses = await request(server())
+        .get('/api/audit-logs')
+        .query({ participantId: ids.participant, action: 'STATUS_CHANGE' })
+        .set(admin)
+        .expect(200);
+      const transitions = (
+        statuses.body as { data: { changes: { status: { new: string } } }[] }
+      ).data.map((l) => l.changes.status.new);
+      expect(transitions).toEqual(
+        expect.arrayContaining(['IN_REVIEW', 'READY_TO_PRINT', 'OBSERVED']),
+      );
+    });
+  });
+
   it('cada subida queda en la auditoría del participante', async () => {
     const res = await request(server())
       .get('/api/audit-logs')

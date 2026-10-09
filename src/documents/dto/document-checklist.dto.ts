@@ -42,6 +42,14 @@ export class ChecklistReviewerDto {
 }
 
 export class ChecklistItemDto {
+  @ApiPropertyOptional({
+    format: 'uuid',
+    nullable: true,
+    description:
+      'Id del documento (entityId en la auditoría); null si aún no existe',
+  })
+  id: string | null;
+
   @ApiProperty({ type: ChecklistDocumentTypeDto })
   documentType: ChecklistDocumentTypeDto;
 

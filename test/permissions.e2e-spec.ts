@@ -231,6 +231,14 @@ describe('Matriz de permisos (e2e)', () => {
         .expect(201),
     );
 
+    it.each(ALL)('%s revisa documentos de participantes regulares', (role) =>
+      request(app.getHttpServer())
+        .patch(`${documentsPath}/SEGURO/review`)
+        .set(auth[role])
+        .send({ status: 'APPROVED' })
+        .expect(200),
+    );
+
     it.each([
       ['ADMIN', 201],
       ['COORDINADOR', 201],

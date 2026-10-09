@@ -82,6 +82,7 @@ function request({
   path,
   query = [],
   body,
+  upload = false,
   description = '',
   auth = 'inherit',
 }) {
@@ -96,8 +97,13 @@ function request({
     url: `${v('baseUrl')}${path}`,
     urlParameters: query.map(([name, value, enabled = true]) => ({ name, value, enabled })),
     headers: body ? [{ name: 'Content-Type', value: 'application/json', enabled: true }] : [],
-    bodyType: body ? 'application/json' : null,
-    body: body ? { text: jsonWithTemplates(body) } : {},
+    // multipart: Yaak añade el Content-Type con su boundary; el archivo se elige en Body → file.
+    bodyType: upload ? 'multipart/form-data' : body ? 'application/json' : null,
+    body: upload
+      ? { form: [{ enabled: true, name: 'file', file: '', contentType: null }] }
+      : body
+        ? { text: jsonWithTemplates(body) }
+        : {},
     // null = hereda el Bearer del workspace; 'none' = sin autenticación.
     authenticationType: auth === 'none' ? 'none' : null,
     authentication: {},
@@ -275,7 +281,61 @@ folder('05 · Participantes', 'Lectura: cualquiera. Crear/editar regulares: los 
   add({ name: 'Reactivar deportista creado (ADMIN)', method: 'PATCH', path: `/participants/${created}/active`, body: { isActive: true } });
 });
 
-folder('06 · Auditoría (ADMIN)', 'Historial de solo lectura. Solo ADMIN.', (add) => {
+folder(
+  '06 · Documentos',
+  'Usa el deportista creado en 05 (delegación M1). Orden: Resolución Directoral → subir archivos → revisar. En cada subida elige el archivo en Body → campo "file".',
+  (add) => {
+    const participant = fromResponse(ID.createParticipant, '$.id', null);
+    const docs = `/participants/${participant}/documents`;
+    const m1 = byCode(ID.macros, 'M1');
+    add({ name: 'Ficha documental', path: docs, description: 'Requisitos, estado de cada documento y habilitación (`eligibility.canPrint`).' });
+    add({ name: 'Subir Resolución Directoral de M1', method: 'POST', path: `/macro-regions/${m1}/resolution`, upload: true, description: 'ADMIN o COORDINADOR. Solo PDF. Se sube una vez por macrorregión.' });
+    add({ name: 'Ver Resolución Directoral de M1', path: `/macro-regions/${m1}/resolution/file`, description: 'Enlace temporal (url + expiresAt).' });
+    add({
+      name: 'Vincular resolución al deportista',
+      method: 'POST',
+      path: `/macro-regions/${m1}/resolution/links`,
+      body: { participantIds: [participant] },
+      description: 'Figurar en la resolución equivale a requisito aprobado.',
+    });
+    const uploads = [
+      ['DNI', 'DNI', 'PDF, JPG o PNG'],
+      ['CERTIFICADO_MEDICO', 'certificado médico', 'PDF, JPG o PNG'],
+      ['SEGURO', 'seguro', 'PDF, JPG o PNG'],
+      ['FOTO', 'foto', 'solo JPG o PNG'],
+    ];
+    for (const [code, label, formats] of uploads) {
+      add({
+        name: `Subir ${label}`,
+        method: 'POST',
+        path: `${docs}/${code}`,
+        upload: true,
+        description: `Formato: ${formats}. Máximo 5 MB. Queda PENDING para revisión.`,
+      });
+    }
+    add({ name: 'Ver archivo del DNI', path: `${docs}/DNI/file`, description: 'Enlace temporal: ábrelo en el navegador antes de que expire.' });
+    for (const [code, label] of uploads) {
+      add({ name: `Aprobar ${label}`, method: 'PATCH', path: `${docs}/${code}/review`, body: { status: 'APPROVED' }, description: 'Requiere archivo cargado.' });
+    }
+    add({
+      name: 'Observar certificado médico',
+      method: 'PATCH',
+      path: `${docs}/CERTIFICADO_MEDICO/review`,
+      body: { status: 'OBSERVED', observation: 'El certificado está vencido.' },
+      description: 'Bloquea la impresión: el participante pasa a OBSERVED.',
+    });
+    add({
+      name: 'Marcar "no aplica" certificado médico',
+      method: 'PATCH',
+      path: `${docs}/CERTIFICADO_MEDICO/review`,
+      body: { status: 'NOT_APPLICABLE', observation: 'Exonerado por la organización.' },
+      description: 'Cuenta como requisito cumplido.',
+    });
+    add({ name: 'Devolver a pendiente certificado médico', method: 'PATCH', path: `${docs}/CERTIFICADO_MEDICO/review`, body: { status: 'PENDING' } });
+  },
+);
+
+folder('07 · Auditoría (ADMIN)', 'Historial de solo lectura. Solo ADMIN.', (add) => {
   add({
     name: 'Historial general',
     path: '/audit-logs',
@@ -290,7 +350,7 @@ folder('06 · Auditoría (ADMIN)', 'Historial de solo lectura. Solo ADMIN.', (ad
   });
 });
 
-folder('07 · Errores esperados', 'Cada petición debe FALLAR con el código indicado: comprueba las reglas y mensajes.', (add) => {
+folder('08 · Errores esperados', 'Cada petición debe FALLAR con el código indicado: comprueba las reglas y mensajes.', (add) => {
   add({ name: '401 · Sin token', path: '/auth/me', auth: 'none', description: 'Esperado: **401** "Sesión inválida o expirada."' });
   add({ name: '401 · Contraseña incorrecta', method: 'POST', path: '/auth/login', auth: 'none', body: { email: v('email'), password: 'incorrecta' }, description: 'Esperado: **401** con mensaje genérico. Cuenta para el límite de 5 intentos por minuto.' });
   add({ name: '400 · Campo no permitido', method: 'POST', path: '/participants', body: { status: 'DELIVERED' }, description: 'Esperado: **400** "El campo status no está permitido." y los campos obligatorios faltantes.' });
@@ -341,7 +401,7 @@ const collection = {
           '1. Levanta el backend: `docker compose up -d`, `npm run migration:run`, `npm run seed`, `npm run start:dev`.\n' +
           '2. Elige el entorno **Admin**, **Coordinador** u **Operador** (arriba a la izquierda).\n' +
           '3. Ejecuta **01 · Autenticación → Login**. El token se aplica solo a todas las peticiones.\n' +
-          '4. Recorre las carpetas en orden (00 → 07).\n\n' +
+          '4. Recorre las carpetas en orden (00 → 08).\n\n' +
           'Al cambiar de entorno, vuelve a ejecutar **Login**.',
         authenticationType: 'bearer',
         authentication: { token: TOKEN },

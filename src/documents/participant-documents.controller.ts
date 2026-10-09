@@ -1,4 +1,12 @@
-import { Controller, Get, Param, Post, UploadedFile } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UploadedFile,
+} from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { Actor } from '../audit/audit-actor';
 import type { AuditActor } from '../audit/audit-actor';
@@ -9,6 +17,7 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { UuidParamPipe } from '../common/pipes/uuid-param.pipe';
 import { DocumentsService } from './documents.service';
 import { DocumentChecklistDto, FileUrlDto } from './dto/document-checklist.dto';
+import { ReviewDocumentDto } from './dto/review-document.dto';
 import { FileUpload } from './upload-body.decorator';
 
 const CODE_PARAM = {
@@ -49,6 +58,24 @@ export class ParticipantDocumentsController {
     @Actor() actor: AuditActor,
   ): Promise<DocumentChecklistDto> {
     return this.documents.upload(participantId, code, file, user, actor);
+  }
+
+  @Patch(':code/review')
+  @Roles(ROLES.ADMIN, ROLES.COORDINATOR, ROLES.OPERATOR)
+  @ApiParam(CODE_PARAM)
+  @ApiOperation({
+    summary: 'Revisa un documento: aprobar, observar, no aplica o pendiente',
+    description:
+      'Aprobar requiere archivo; observar requiere observación. Registra revisor y fecha, y recalcula el estado.',
+  })
+  review(
+    @Param('participantId', UuidParamPipe) participantId: string,
+    @Param('code') code: string,
+    @Body() dto: ReviewDocumentDto,
+    @CurrentUser() user: AuthUser,
+    @Actor() actor: AuditActor,
+  ): Promise<DocumentChecklistDto> {
+    return this.documents.review(participantId, code, dto, user, actor);
   }
 
   @Get(':code/file')

@@ -20,6 +20,7 @@ import { assertCanManageCategory } from '../participants/participant-rules';
 import { StorageService } from '../storage/storage.service';
 import { AllowedMimeType, SignedUrl } from '../storage/storage.types';
 import { DocumentChecklistDto } from './dto/document-checklist.dto';
+import { ReviewDocumentDto } from './dto/review-document.dto';
 import { ParticipantDocument } from './entities/participant-document.entity';
 import { DocumentStatus } from './enums/document-status.enum';
 
@@ -62,6 +63,7 @@ export class DocumentsService {
     const items = types.map((type) => {
       const doc = byType.get(type.id);
       return {
+        id: doc?.id ?? null,
         documentType: {
           id: type.id,
           code: type.code,
@@ -149,6 +151,57 @@ export class DocumentsService {
       throw new NotFoundException('El documento no tiene un archivo cargado.');
     }
     return this.storage.accessUrl(doc.file);
+  }
+
+  // ── Revisión ─────────────────────────────────────────────────────
+
+  /** Aprueba, observa, marca "no aplica" o devuelve a pendiente un documento. */
+  async review(
+    participantId: string,
+    code: string,
+    dto: ReviewDocumentDto,
+    user: AuthUser,
+    actor: AuditActor,
+  ): Promise<DocumentChecklistDto> {
+    const type = await this.documentTypes.getActiveByCode(code);
+    const observation = dto.observation || null;
+    if (dto.status === DocumentStatus.OBSERVED && !observation) {
+      throw new BadRequestException(
+        'Indique la observación: qué debe corregirse.',
+      );
+    }
+
+    await this.dataSource.transaction(async (manager) => {
+      const participant = await this.getParticipant(manager, participantId);
+      this.assertEditable(participant, user);
+
+      const current = await manager
+        .getRepository(ParticipantDocument)
+        .findOneBy({ participantId, documentTypeId: type.id });
+      if (dto.status === DocumentStatus.APPROVED && !current?.fileId) {
+        throw new ConflictException(
+          'No se puede aprobar un documento sin archivo cargado.',
+        );
+      }
+
+      const reviewed = dto.status !== DocumentStatus.PENDING;
+      await this.saveDocument(
+        manager,
+        actor,
+        participantId,
+        type,
+        {
+          status: dto.status,
+          fileId: current?.fileId ?? null,
+          observation,
+          reviewedById: reviewed ? user.id : null,
+          reviewedAt: reviewed ? new Date() : null,
+        },
+        AuditAction.DOCUMENT_REVIEW,
+      );
+      await this.eligibility.recalculate(manager, participantId, actor);
+    });
+    return this.checklist(participantId);
   }
 
   // ── Resolución Directoral por macrorregión ───────────────────────

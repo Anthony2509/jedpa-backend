@@ -1,14 +1,14 @@
 {
   "yaakVersion": "2026.2.0",
   "yaakSchema": 4,
-  "timestamp": "2026-10-08T23:41:00",
+  "timestamp": "2026-10-09T00:22:58",
   "resources": {
     "workspaces": [
       {
         "model": "workspace",
         "id": "wk_JedpaApi01",
         "name": "JEDPA API",
-        "description": "API del sistema de credenciales JEDPA (NestJS, puerto 4000).\n\n1. Levanta el backend: `docker compose up -d`, `npm run migration:run`, `npm run seed`, `npm run start:dev`.\n2. Elige el entorno **Admin**, **Coordinador** u **Operador** (arriba a la izquierda).\n3. Ejecuta **01 · Autenticación → Login**. El token se aplica solo a todas las peticiones.\n4. Recorre las carpetas en orden (00 → 07).\n\nAl cambiar de entorno, vuelve a ejecutar **Login**.",
+        "description": "API del sistema de credenciales JEDPA (NestJS, puerto 4000).\n\n1. Levanta el backend: `docker compose up -d`, `npm run migration:run`, `npm run seed`, `npm run start:dev`.\n2. Elige el entorno **Admin**, **Coordinador** u **Operador** (arriba a la izquierda).\n3. Ejecuta **01 · Autenticación → Login**. El token se aplica solo a todas las peticiones.\n4. Recorre las carpetas en orden (00 → 08).\n\nAl cambiar de entorno, vuelve a ejecutar **Login**.",
         "authenticationType": "bearer",
         "authentication": {
           "token": "${[ response.body.path(request='rq_JdpLogin01', behavior='ttl', ttl='25200', path='$.accessToken') ]}"
@@ -173,8 +173,8 @@
         "id": "fl_JdpFold07",
         "workspaceId": "wk_JedpaApi01",
         "folderId": null,
-        "name": "06 · Auditoría (ADMIN)",
-        "description": "Historial de solo lectura. Solo ADMIN.",
+        "name": "06 · Documentos",
+        "description": "Usa el deportista creado en 05 (delegación M1). Orden: Resolución Directoral → subir archivos → revisar. En cada subida elige el archivo en Body → campo \"file\".",
         "sortPriority": 7000,
         "headers": [],
         "authentication": {},
@@ -185,9 +185,21 @@
         "id": "fl_JdpFold08",
         "workspaceId": "wk_JedpaApi01",
         "folderId": null,
-        "name": "07 · Errores esperados",
-        "description": "Cada petición debe FALLAR con el código indicado: comprueba las reglas y mensajes.",
+        "name": "07 · Auditoría (ADMIN)",
+        "description": "Historial de solo lectura. Solo ADMIN.",
         "sortPriority": 8000,
+        "headers": [],
+        "authentication": {},
+        "authenticationType": null
+      },
+      {
+        "model": "folder",
+        "id": "fl_JdpFold09",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": null,
+        "name": "08 · Errores esperados",
+        "description": "Cada petición debe FALLAR con el código indicado: comprueba las reglas y mensajes.",
+        "sortPriority": 9000,
         "headers": [],
         "authentication": {},
         "authenticationType": null
@@ -944,6 +956,387 @@
         "id": "rq_JdpReq0021",
         "workspaceId": "wk_JedpaApi01",
         "folderId": "fl_JdpFold07",
+        "name": "Ficha documental",
+        "description": "Requisitos, estado de cada documento y habilitación (`eligibility.canPrint`).",
+        "method": "GET",
+        "url": "${[ baseUrl ]}/participants/${[ response.body.path(request='rq_JdpPartC01', path='$.id') ]}/documents",
+        "urlParameters": [],
+        "headers": [],
+        "bodyType": null,
+        "body": {},
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 1
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpReq0022",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold07",
+        "name": "Subir Resolución Directoral de M1",
+        "description": "ADMIN o COORDINADOR. Solo PDF. Se sube una vez por macrorregión.",
+        "method": "POST",
+        "url": "${[ baseUrl ]}/macro-regions/${[ response.body.path(request='rq_JdpMacros1', behavior='smart', path='$[?(@.code==\"M1\")].id') ]}/resolution",
+        "urlParameters": [],
+        "headers": [],
+        "bodyType": "multipart/form-data",
+        "body": {
+          "form": [
+            {
+              "enabled": true,
+              "name": "file",
+              "file": "",
+              "contentType": null
+            }
+          ]
+        },
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 2
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpReq0023",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold07",
+        "name": "Ver Resolución Directoral de M1",
+        "description": "Enlace temporal (url + expiresAt).",
+        "method": "GET",
+        "url": "${[ baseUrl ]}/macro-regions/${[ response.body.path(request='rq_JdpMacros1', behavior='smart', path='$[?(@.code==\"M1\")].id') ]}/resolution/file",
+        "urlParameters": [],
+        "headers": [],
+        "bodyType": null,
+        "body": {},
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 3
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpReq0024",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold07",
+        "name": "Vincular resolución al deportista",
+        "description": "Figurar en la resolución equivale a requisito aprobado.",
+        "method": "POST",
+        "url": "${[ baseUrl ]}/macro-regions/${[ response.body.path(request='rq_JdpMacros1', behavior='smart', path='$[?(@.code==\"M1\")].id') ]}/resolution/links",
+        "urlParameters": [],
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json",
+            "enabled": true
+          }
+        ],
+        "bodyType": "application/json",
+        "body": {
+          "text": "{\n  \"participantIds\": [\n    \"${[ response.body.path(request='rq_JdpPartC01', path='$.id') ]}\"\n  ]\n}"
+        },
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 4
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpReq0025",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold07",
+        "name": "Subir DNI",
+        "description": "Formato: PDF, JPG o PNG. Máximo 5 MB. Queda PENDING para revisión.",
+        "method": "POST",
+        "url": "${[ baseUrl ]}/participants/${[ response.body.path(request='rq_JdpPartC01', path='$.id') ]}/documents/DNI",
+        "urlParameters": [],
+        "headers": [],
+        "bodyType": "multipart/form-data",
+        "body": {
+          "form": [
+            {
+              "enabled": true,
+              "name": "file",
+              "file": "",
+              "contentType": null
+            }
+          ]
+        },
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 5
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpReq0026",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold07",
+        "name": "Subir certificado médico",
+        "description": "Formato: PDF, JPG o PNG. Máximo 5 MB. Queda PENDING para revisión.",
+        "method": "POST",
+        "url": "${[ baseUrl ]}/participants/${[ response.body.path(request='rq_JdpPartC01', path='$.id') ]}/documents/CERTIFICADO_MEDICO",
+        "urlParameters": [],
+        "headers": [],
+        "bodyType": "multipart/form-data",
+        "body": {
+          "form": [
+            {
+              "enabled": true,
+              "name": "file",
+              "file": "",
+              "contentType": null
+            }
+          ]
+        },
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 6
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpReq0027",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold07",
+        "name": "Subir seguro",
+        "description": "Formato: PDF, JPG o PNG. Máximo 5 MB. Queda PENDING para revisión.",
+        "method": "POST",
+        "url": "${[ baseUrl ]}/participants/${[ response.body.path(request='rq_JdpPartC01', path='$.id') ]}/documents/SEGURO",
+        "urlParameters": [],
+        "headers": [],
+        "bodyType": "multipart/form-data",
+        "body": {
+          "form": [
+            {
+              "enabled": true,
+              "name": "file",
+              "file": "",
+              "contentType": null
+            }
+          ]
+        },
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 7
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpReq0028",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold07",
+        "name": "Subir foto",
+        "description": "Formato: solo JPG o PNG. Máximo 5 MB. Queda PENDING para revisión.",
+        "method": "POST",
+        "url": "${[ baseUrl ]}/participants/${[ response.body.path(request='rq_JdpPartC01', path='$.id') ]}/documents/FOTO",
+        "urlParameters": [],
+        "headers": [],
+        "bodyType": "multipart/form-data",
+        "body": {
+          "form": [
+            {
+              "enabled": true,
+              "name": "file",
+              "file": "",
+              "contentType": null
+            }
+          ]
+        },
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 8
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpReq0029",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold07",
+        "name": "Ver archivo del DNI",
+        "description": "Enlace temporal: ábrelo en el navegador antes de que expire.",
+        "method": "GET",
+        "url": "${[ baseUrl ]}/participants/${[ response.body.path(request='rq_JdpPartC01', path='$.id') ]}/documents/DNI/file",
+        "urlParameters": [],
+        "headers": [],
+        "bodyType": null,
+        "body": {},
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 9
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpReq0030",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold07",
+        "name": "Aprobar DNI",
+        "description": "Requiere archivo cargado.",
+        "method": "PATCH",
+        "url": "${[ baseUrl ]}/participants/${[ response.body.path(request='rq_JdpPartC01', path='$.id') ]}/documents/DNI/review",
+        "urlParameters": [],
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json",
+            "enabled": true
+          }
+        ],
+        "bodyType": "application/json",
+        "body": {
+          "text": "{\n  \"status\": \"APPROVED\"\n}"
+        },
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 10
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpReq0031",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold07",
+        "name": "Aprobar certificado médico",
+        "description": "Requiere archivo cargado.",
+        "method": "PATCH",
+        "url": "${[ baseUrl ]}/participants/${[ response.body.path(request='rq_JdpPartC01', path='$.id') ]}/documents/CERTIFICADO_MEDICO/review",
+        "urlParameters": [],
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json",
+            "enabled": true
+          }
+        ],
+        "bodyType": "application/json",
+        "body": {
+          "text": "{\n  \"status\": \"APPROVED\"\n}"
+        },
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 11
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpReq0032",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold07",
+        "name": "Aprobar seguro",
+        "description": "Requiere archivo cargado.",
+        "method": "PATCH",
+        "url": "${[ baseUrl ]}/participants/${[ response.body.path(request='rq_JdpPartC01', path='$.id') ]}/documents/SEGURO/review",
+        "urlParameters": [],
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json",
+            "enabled": true
+          }
+        ],
+        "bodyType": "application/json",
+        "body": {
+          "text": "{\n  \"status\": \"APPROVED\"\n}"
+        },
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 12
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpReq0033",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold07",
+        "name": "Aprobar foto",
+        "description": "Requiere archivo cargado.",
+        "method": "PATCH",
+        "url": "${[ baseUrl ]}/participants/${[ response.body.path(request='rq_JdpPartC01', path='$.id') ]}/documents/FOTO/review",
+        "urlParameters": [],
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json",
+            "enabled": true
+          }
+        ],
+        "bodyType": "application/json",
+        "body": {
+          "text": "{\n  \"status\": \"APPROVED\"\n}"
+        },
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 13
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpReq0034",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold07",
+        "name": "Observar certificado médico",
+        "description": "Bloquea la impresión: el participante pasa a OBSERVED.",
+        "method": "PATCH",
+        "url": "${[ baseUrl ]}/participants/${[ response.body.path(request='rq_JdpPartC01', path='$.id') ]}/documents/CERTIFICADO_MEDICO/review",
+        "urlParameters": [],
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json",
+            "enabled": true
+          }
+        ],
+        "bodyType": "application/json",
+        "body": {
+          "text": "{\n  \"status\": \"OBSERVED\",\n  \"observation\": \"El certificado está vencido.\"\n}"
+        },
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 14
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpReq0035",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold07",
+        "name": "Marcar \"no aplica\" certificado médico",
+        "description": "Cuenta como requisito cumplido.",
+        "method": "PATCH",
+        "url": "${[ baseUrl ]}/participants/${[ response.body.path(request='rq_JdpPartC01', path='$.id') ]}/documents/CERTIFICADO_MEDICO/review",
+        "urlParameters": [],
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json",
+            "enabled": true
+          }
+        ],
+        "bodyType": "application/json",
+        "body": {
+          "text": "{\n  \"status\": \"NOT_APPLICABLE\",\n  \"observation\": \"Exonerado por la organización.\"\n}"
+        },
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 15
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpReq0036",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold07",
+        "name": "Devolver a pendiente certificado médico",
+        "description": "",
+        "method": "PATCH",
+        "url": "${[ baseUrl ]}/participants/${[ response.body.path(request='rq_JdpPartC01', path='$.id') ]}/documents/CERTIFICADO_MEDICO/review",
+        "urlParameters": [],
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json",
+            "enabled": true
+          }
+        ],
+        "bodyType": "application/json",
+        "body": {
+          "text": "{\n  \"status\": \"PENDING\"\n}"
+        },
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 16
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpReq0037",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold08",
         "name": "Historial general",
         "description": "Más reciente primero. Fechas en hora de Perú.",
         "method": "GET",
@@ -989,9 +1382,9 @@
       },
       {
         "model": "http_request",
-        "id": "rq_JdpReq0022",
+        "id": "rq_JdpReq0038",
         "workspaceId": "wk_JedpaApi01",
-        "folderId": "fl_JdpFold07",
+        "folderId": "fl_JdpFold08",
         "name": "Historial del deportista creado",
         "description": "Alta y ediciones con el campo afectado, valor anterior y nuevo, y quién lo hizo.",
         "method": "GET",
@@ -1012,9 +1405,9 @@
       },
       {
         "model": "http_request",
-        "id": "rq_JdpReq0023",
+        "id": "rq_JdpReq0039",
         "workspaceId": "wk_JedpaApi01",
-        "folderId": "fl_JdpFold08",
+        "folderId": "fl_JdpFold09",
         "name": "401 · Sin token",
         "description": "Esperado: **401** \"Sesión inválida o expirada.\"",
         "method": "GET",
@@ -1029,9 +1422,9 @@
       },
       {
         "model": "http_request",
-        "id": "rq_JdpReq0024",
+        "id": "rq_JdpReq0040",
         "workspaceId": "wk_JedpaApi01",
-        "folderId": "fl_JdpFold08",
+        "folderId": "fl_JdpFold09",
         "name": "401 · Contraseña incorrecta",
         "description": "Esperado: **401** con mensaje genérico. Cuenta para el límite de 5 intentos por minuto.",
         "method": "POST",
@@ -1054,9 +1447,9 @@
       },
       {
         "model": "http_request",
-        "id": "rq_JdpReq0025",
+        "id": "rq_JdpReq0041",
         "workspaceId": "wk_JedpaApi01",
-        "folderId": "fl_JdpFold08",
+        "folderId": "fl_JdpFold09",
         "name": "400 · Campo no permitido",
         "description": "Esperado: **400** \"El campo status no está permitido.\" y los campos obligatorios faltantes.",
         "method": "POST",
@@ -1079,9 +1472,9 @@
       },
       {
         "model": "http_request",
-        "id": "rq_JdpReq0026",
+        "id": "rq_JdpReq0042",
         "workspaceId": "wk_JedpaApi01",
-        "folderId": "fl_JdpFold08",
+        "folderId": "fl_JdpFold09",
         "name": "400 · DNI inválido",
         "description": "Esperado: **400** \"El DNI debe tener exactamente 8 dígitos.\"",
         "method": "POST",
@@ -1104,9 +1497,9 @@
       },
       {
         "model": "http_request",
-        "id": "rq_JdpReq0027",
+        "id": "rq_JdpReq0043",
         "workspaceId": "wk_JedpaApi01",
-        "folderId": "fl_JdpFold08",
+        "folderId": "fl_JdpFold09",
         "name": "400 · Deportista sin delegación",
         "description": "Esperado: **400** con delegación, género y fecha de nacimiento obligatorios.",
         "method": "POST",
@@ -1129,9 +1522,9 @@
       },
       {
         "model": "http_request",
-        "id": "rq_JdpReq0028",
+        "id": "rq_JdpReq0044",
         "workspaceId": "wk_JedpaApi01",
-        "folderId": "fl_JdpFold08",
+        "folderId": "fl_JdpFold09",
         "name": "400 · Paginación fuera de rango",
         "description": "Esperado: **400** (limit máximo 100, page mínimo 1).",
         "method": "GET",
@@ -1157,9 +1550,9 @@
       },
       {
         "model": "http_request",
-        "id": "rq_JdpReq0029",
+        "id": "rq_JdpReq0045",
         "workspaceId": "wk_JedpaApi01",
-        "folderId": "fl_JdpFold08",
+        "folderId": "fl_JdpFold09",
         "name": "404 · Participante inexistente",
         "description": "",
         "method": "GET",
@@ -1174,9 +1567,9 @@
       },
       {
         "model": "http_request",
-        "id": "rq_JdpReq0030",
+        "id": "rq_JdpReq0046",
         "workspaceId": "wk_JedpaApi01",
-        "folderId": "fl_JdpFold08",
+        "folderId": "fl_JdpFold09",
         "name": "400 · Id que no es UUID",
         "description": "Esperado: **400** \"El identificador no es un UUID válido.\"",
         "method": "GET",
@@ -1191,9 +1584,9 @@
       },
       {
         "model": "http_request",
-        "id": "rq_JdpReq0031",
+        "id": "rq_JdpReq0047",
         "workspaceId": "wk_JedpaApi01",
-        "folderId": "fl_JdpFold08",
+        "folderId": "fl_JdpFold09",
         "name": "403 · Operador lista usuarios",
         "description": "Usa el entorno **Operador** (y ejecuta Login). Esperado: **403**.",
         "method": "GET",
