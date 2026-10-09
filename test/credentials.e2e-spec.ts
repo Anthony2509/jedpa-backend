@@ -28,13 +28,12 @@ const PNG = Buffer.from(
 );
 
 /** Cuerpo binario (PDF) como Buffer. */
-const binary = (
-  res: NodeJS.ReadableStream,
-  done: (err: Error | null, body: Buffer) => void,
-) => {
+const binary: Parameters<request.Test['parse']>[0] = (res, done) => {
+  // En Node, la respuesta que recibe el parser es un stream.
+  const stream = res as unknown as NodeJS.ReadableStream;
   const chunks: Buffer[] = [];
-  res.on('data', (chunk: Buffer) => chunks.push(chunk));
-  res.on('end', () => done(null, Buffer.concat(chunks)));
+  stream.on('data', (chunk: Buffer) => chunks.push(chunk));
+  stream.on('end', () => done(null, Buffer.concat(chunks)));
 };
 
 const pageCount = (pdf: Buffer) =>

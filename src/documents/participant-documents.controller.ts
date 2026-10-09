@@ -19,7 +19,7 @@ import { UuidParamPipe } from '../common/pipes/uuid-param.pipe';
 import { DocumentsService } from './documents.service';
 import { DocumentChecklistDto, FileUrlDto } from './dto/document-checklist.dto';
 import { ReviewDocumentDto } from './dto/review-document.dto';
-import { FileUpload } from './upload-body.decorator';
+import { FileUpload } from '../common/decorators/file-upload.decorator';
 
 const CODE_PARAM = {
   name: 'code',

@@ -24,7 +24,8 @@
     "migration:revert": "typeorm-ts-node-commonjs migration:revert -d src/database/data-source.ts",
     "migration:show": "typeorm-ts-node-commonjs migration:show -d src/database/data-source.ts",
     "seed": "ts-node src/database/seeds/seed.ts",
-    "yaak:generate": "node docs/yaak/generate-collection.mjs"
+    "yaak:generate": "node docs/yaak/generate-collection.mjs",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
@@ -40,6 +41,7 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
     "cloudinary": "^2.11.0",
+    "exceljs": "^4.4.0",
     "helmet": "^8.3.0",
     "joi": "^18.2.9",
     "passport": "^0.7.0",

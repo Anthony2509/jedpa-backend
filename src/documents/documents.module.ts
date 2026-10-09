@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { MulterModule } from '@nestjs/platform-express';
 import { AuditModule } from '../audit/audit.module';
+import { UploadModule } from '../common/upload.module';
 import { DocumentTypesModule } from '../catalogs/document-types/document-types.module';
 import { EligibilityModule } from '../eligibility/eligibility.module';
 import { StorageModule } from '../storage/storage.module';
@@ -11,16 +10,7 @@ import { ResolutionsController } from './resolutions.controller';
 
 @Module({
   imports: [
-    // En memoria: el archivo se valida y se envía al proveedor sin tocar el disco.
-    MulterModule.registerAsync({
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        limits: {
-          fileSize: config.getOrThrow<number>('UPLOAD_MAX_BYTES'),
-          files: 1,
-        },
-      }),
-    }),
+    UploadModule,
     DocumentTypesModule,
     StorageModule,
     EligibilityModule,

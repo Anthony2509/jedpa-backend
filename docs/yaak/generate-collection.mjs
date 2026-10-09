@@ -281,6 +281,22 @@ folder('05 · Participantes', 'Lectura: cualquiera. Crear/editar regulares: los 
   });
   add({ name: 'Desactivar deportista creado (ADMIN)', method: 'PATCH', path: `/participants/${created}/active`, body: { isActive: false } });
   add({ name: 'Reactivar deportista creado (ADMIN)', method: 'PATCH', path: `/participants/${created}/active`, body: { isActive: true } });
+  add({
+    name: 'Importar padrón · 1. Vista previa',
+    method: 'POST',
+    path: '/participants/import/preview',
+    upload: true,
+    description:
+      'ADMIN o COORDINADOR. Excel .xlsx del cliente (hoja LISTA LIMPIA). Valida fila por fila SIN guardar: errores por fila, nuevos, ya registrados y delegaciones a crear. USUARIO y PASSWORD nunca se leen.',
+  });
+  add({
+    name: 'Importar padrón · 2. Confirmar',
+    method: 'POST',
+    path: '/participants/import',
+    upload: true,
+    description:
+      'El mismo Excel. Si hay una sola fila con error no importa nada. Los ya registrados se omiten. Todo queda auditado como IMPORT.',
+  });
 });
 
 folder(

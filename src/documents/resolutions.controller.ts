@@ -22,7 +22,7 @@ import {
   LinkResolutionDto,
   LinkResolutionResultDto,
 } from './dto/link-resolution.dto';
-import { FileUpload } from './upload-body.decorator';
+import { FileUpload } from '../common/decorators/file-upload.decorator';
 
 @ApiTags('Resolución Directoral')
 @Controller('macro-regions/:macroRegionId/resolution')

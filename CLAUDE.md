@@ -62,7 +62,7 @@ Los estados documentales (`PENDING_DOCUMENTS` → `READY_TO_PRINT`) se **calcula
 
 ## 9. Forma de trabajo
 
-- Al terminar cada tarea ejecuta `npm run build`, `npm run lint`, `npm test` y `npm run test:e2e` y corrige los errores. Las e2e usan una base aparte (`jedpa_test`, recreada en cada ejecución) y requieren Docker levantado. Toda ruta nueva se añade a la matriz de `test/permissions.e2e-spec.ts` y a la colección de Yaak (`docs/yaak/generate-collection.mjs`, luego `npm run yaak:generate`).
+- Al terminar cada tarea ejecuta `npm run build`, `npm run typecheck` (incluye las pruebas), `npm run lint`, `npm test` y `npm run test:e2e` y corrige los errores. Las e2e usan una base aparte (`jedpa_test`, recreada en cada ejecución) y requieren Docker levantado. Toda ruta nueva se añade a la matriz de `test/permissions.e2e-spec.ts` y a la colección de Yaak (`docs/yaak/generate-collection.mjs`, luego `npm run yaak:generate`).
 - Resume los archivos creados o modificados y explica cómo probar.
 - Un commit local por historia de Jira terminada, con el formato `[TIPO] JEDPA-XX descripción` (TIPO: FEAT, FIX, DOCS, CHORE, TEST, REFACTOR). **Nunca** hagas `git push`: lo revisa y sube el equipo.
 - No instales dependencias innecesarias ni inventes funcionalidades fuera de lo pedido.

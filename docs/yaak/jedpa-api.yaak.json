@@ -1,7 +1,7 @@
 {
   "yaakVersion": "2026.2.0",
   "yaakSchema": 4,
-  "timestamp": "2026-10-09T00:38:20",
+  "timestamp": "2026-10-09T00:47:24",
   "resources": {
     "workspaces": [
       {
@@ -967,6 +967,58 @@
         "model": "http_request",
         "id": "rq_JdpReq0021",
         "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold06",
+        "name": "Importar padrón · 1. Vista previa",
+        "description": "ADMIN o COORDINADOR. Excel .xlsx del cliente (hoja LISTA LIMPIA). Valida fila por fila SIN guardar: errores por fila, nuevos, ya registrados y delegaciones a crear. USUARIO y PASSWORD nunca se leen.",
+        "method": "POST",
+        "url": "${[ baseUrl ]}/participants/import/preview",
+        "urlParameters": [],
+        "headers": [],
+        "bodyType": "multipart/form-data",
+        "body": {
+          "form": [
+            {
+              "enabled": true,
+              "name": "file",
+              "file": "",
+              "contentType": null
+            }
+          ]
+        },
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 9
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpReq0022",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold06",
+        "name": "Importar padrón · 2. Confirmar",
+        "description": "El mismo Excel. Si hay una sola fila con error no importa nada. Los ya registrados se omiten. Todo queda auditado como IMPORT.",
+        "method": "POST",
+        "url": "${[ baseUrl ]}/participants/import",
+        "urlParameters": [],
+        "headers": [],
+        "bodyType": "multipart/form-data",
+        "body": {
+          "form": [
+            {
+              "enabled": true,
+              "name": "file",
+              "file": "",
+              "contentType": null
+            }
+          ]
+        },
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 10
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpReq0023",
+        "workspaceId": "wk_JedpaApi01",
         "folderId": "fl_JdpFold07",
         "name": "Ficha documental",
         "description": "Requisitos, estado de cada documento y habilitación (`eligibility.canPrint`).",
@@ -982,7 +1034,7 @@
       },
       {
         "model": "http_request",
-        "id": "rq_JdpReq0022",
+        "id": "rq_JdpReq0024",
         "workspaceId": "wk_JedpaApi01",
         "folderId": "fl_JdpFold07",
         "name": "Subir Resolución Directoral de M1",
@@ -1008,7 +1060,7 @@
       },
       {
         "model": "http_request",
-        "id": "rq_JdpReq0023",
+        "id": "rq_JdpReq0025",
         "workspaceId": "wk_JedpaApi01",
         "folderId": "fl_JdpFold07",
         "name": "Ver Resolución Directoral de M1",
@@ -1025,7 +1077,7 @@
       },
       {
         "model": "http_request",
-        "id": "rq_JdpReq0024",
+        "id": "rq_JdpReq0026",
         "workspaceId": "wk_JedpaApi01",
         "folderId": "fl_JdpFold07",
         "name": "Vincular resolución al deportista",
@@ -1050,7 +1102,7 @@
       },
       {
         "model": "http_request",
-        "id": "rq_JdpReq0025",
+        "id": "rq_JdpReq0027",
         "workspaceId": "wk_JedpaApi01",
         "folderId": "fl_JdpFold07",
         "name": "Subir DNI",
@@ -1076,7 +1128,7 @@
       },
       {
         "model": "http_request",
-        "id": "rq_JdpReq0026",
+        "id": "rq_JdpReq0028",
         "workspaceId": "wk_JedpaApi01",
         "folderId": "fl_JdpFold07",
         "name": "Subir certificado médico",
@@ -1102,7 +1154,7 @@
       },
       {
         "model": "http_request",
-        "id": "rq_JdpReq0027",
+        "id": "rq_JdpReq0029",
         "workspaceId": "wk_JedpaApi01",
         "folderId": "fl_JdpFold07",
         "name": "Subir seguro",
@@ -1128,7 +1180,7 @@
       },
       {
         "model": "http_request",
-        "id": "rq_JdpReq0028",
+        "id": "rq_JdpReq0030",
         "workspaceId": "wk_JedpaApi01",
         "folderId": "fl_JdpFold07",
         "name": "Subir foto",
@@ -1154,7 +1206,7 @@
       },
       {
         "model": "http_request",
-        "id": "rq_JdpReq0029",
+        "id": "rq_JdpReq0031",
         "workspaceId": "wk_JedpaApi01",
         "folderId": "fl_JdpFold07",
         "name": "Ver archivo del DNI",
@@ -1171,7 +1223,7 @@
       },
       {
         "model": "http_request",
-        "id": "rq_JdpReq0030",
+        "id": "rq_JdpReq0032",
         "workspaceId": "wk_JedpaApi01",
         "folderId": "fl_JdpFold07",
         "name": "Aprobar DNI",
@@ -1196,7 +1248,7 @@
       },
       {
         "model": "http_request",
-        "id": "rq_JdpReq0031",
+        "id": "rq_JdpReq0033",
         "workspaceId": "wk_JedpaApi01",
         "folderId": "fl_JdpFold07",
         "name": "Aprobar certificado médico",
@@ -1221,7 +1273,7 @@
       },
       {
         "model": "http_request",
-        "id": "rq_JdpReq0032",
+        "id": "rq_JdpReq0034",
         "workspaceId": "wk_JedpaApi01",
         "folderId": "fl_JdpFold07",
         "name": "Aprobar seguro",
@@ -1246,7 +1298,7 @@
       },
       {
         "model": "http_request",
-        "id": "rq_JdpReq0033",
+        "id": "rq_JdpReq0035",
         "workspaceId": "wk_JedpaApi01",
         "folderId": "fl_JdpFold07",
         "name": "Aprobar foto",
@@ -1271,7 +1323,7 @@
       },
       {
         "model": "http_request",
-        "id": "rq_JdpReq0034",
+        "id": "rq_JdpReq0036",
         "workspaceId": "wk_JedpaApi01",
         "folderId": "fl_JdpFold07",
         "name": "Observar certificado médico",
@@ -1296,7 +1348,7 @@
       },
       {
         "model": "http_request",
-        "id": "rq_JdpReq0035",
+        "id": "rq_JdpReq0037",
         "workspaceId": "wk_JedpaApi01",
         "folderId": "fl_JdpFold07",
         "name": "Marcar \"no aplica\" certificado médico",
@@ -1321,7 +1373,7 @@
       },
       {
         "model": "http_request",
-        "id": "rq_JdpReq0036",
+        "id": "rq_JdpReq0038",
         "workspaceId": "wk_JedpaApi01",
         "folderId": "fl_JdpFold07",
         "name": "Devolver a pendiente certificado médico",
@@ -1363,7 +1415,7 @@
       },
       {
         "model": "http_request",
-        "id": "rq_JdpReq0037",
+        "id": "rq_JdpReq0039",
         "workspaceId": "wk_JedpaApi01",
         "folderId": "fl_JdpFold08",
         "name": "Emitir original",
@@ -1388,7 +1440,7 @@
       },
       {
         "model": "http_request",
-        "id": "rq_JdpReq0038",
+        "id": "rq_JdpReq0040",
         "workspaceId": "wk_JedpaApi01",
         "folderId": "fl_JdpFold08",
         "name": "PDF del original",
@@ -1405,7 +1457,7 @@
       },
       {
         "model": "http_request",
-        "id": "rq_JdpReq0039",
+        "id": "rq_JdpReq0041",
         "workspaceId": "wk_JedpaApi01",
         "folderId": "fl_JdpFold08",
         "name": "Emitir duplicado 1",
@@ -1430,7 +1482,7 @@
       },
       {
         "model": "http_request",
-        "id": "rq_JdpReq0040",
+        "id": "rq_JdpReq0042",
         "workspaceId": "wk_JedpaApi01",
         "folderId": "fl_JdpFold08",
         "name": "PDF del duplicado 1",
@@ -1447,7 +1499,7 @@
       },
       {
         "model": "http_request",
-        "id": "rq_JdpReq0041",
+        "id": "rq_JdpReq0043",
         "workspaceId": "wk_JedpaApi01",
         "folderId": "fl_JdpFold08",
         "name": "Verificar QR vigente (público)",
@@ -1464,7 +1516,7 @@
       },
       {
         "model": "http_request",
-        "id": "rq_JdpReq0042",
+        "id": "rq_JdpReq0044",
         "workspaceId": "wk_JedpaApi01",
         "folderId": "fl_JdpFold08",
         "name": "Verificar QR revocado (público)",
@@ -1506,7 +1558,7 @@
       },
       {
         "model": "http_request",
-        "id": "rq_JdpReq0043",
+        "id": "rq_JdpReq0045",
         "workspaceId": "wk_JedpaApi01",
         "folderId": "fl_JdpFold08",
         "name": "PDF del lote",
@@ -1531,7 +1583,7 @@
       },
       {
         "model": "http_request",
-        "id": "rq_JdpReq0044",
+        "id": "rq_JdpReq0046",
         "workspaceId": "wk_JedpaApi01",
         "folderId": "fl_JdpFold08",
         "name": "Hoja de prueba de impresión",
@@ -1548,7 +1600,7 @@
       },
       {
         "model": "http_request",
-        "id": "rq_JdpReq0045",
+        "id": "rq_JdpReq0047",
         "workspaceId": "wk_JedpaApi01",
         "folderId": "fl_JdpFold09",
         "name": "Historial general",
@@ -1596,7 +1648,7 @@
       },
       {
         "model": "http_request",
-        "id": "rq_JdpReq0046",
+        "id": "rq_JdpReq0048",
         "workspaceId": "wk_JedpaApi01",
         "folderId": "fl_JdpFold09",
         "name": "Historial del deportista creado",
@@ -1619,7 +1671,7 @@
       },
       {
         "model": "http_request",
-        "id": "rq_JdpReq0047",
+        "id": "rq_JdpReq0049",
         "workspaceId": "wk_JedpaApi01",
         "folderId": "fl_JdpFold10",
         "name": "401 · Sin token",
@@ -1636,7 +1688,7 @@
       },
       {
         "model": "http_request",
-        "id": "rq_JdpReq0048",
+        "id": "rq_JdpReq0050",
         "workspaceId": "wk_JedpaApi01",
         "folderId": "fl_JdpFold10",
         "name": "401 · Contraseña incorrecta",
@@ -1661,7 +1713,7 @@
       },
       {
         "model": "http_request",
-        "id": "rq_JdpReq0049",
+        "id": "rq_JdpReq0051",
         "workspaceId": "wk_JedpaApi01",
         "folderId": "fl_JdpFold10",
         "name": "400 · Campo no permitido",
@@ -1686,7 +1738,7 @@
       },
       {
         "model": "http_request",
-        "id": "rq_JdpReq0050",
+        "id": "rq_JdpReq0052",
         "workspaceId": "wk_JedpaApi01",
         "folderId": "fl_JdpFold10",
         "name": "400 · DNI inválido",
@@ -1711,7 +1763,7 @@
       },
       {
         "model": "http_request",
-        "id": "rq_JdpReq0051",
+        "id": "rq_JdpReq0053",
         "workspaceId": "wk_JedpaApi01",
         "folderId": "fl_JdpFold10",
         "name": "400 · Deportista sin delegación",
@@ -1736,7 +1788,7 @@
       },
       {
         "model": "http_request",
-        "id": "rq_JdpReq0052",
+        "id": "rq_JdpReq0054",
         "workspaceId": "wk_JedpaApi01",
         "folderId": "fl_JdpFold10",
         "name": "400 · Paginación fuera de rango",
@@ -1764,7 +1816,7 @@
       },
       {
         "model": "http_request",
-        "id": "rq_JdpReq0053",
+        "id": "rq_JdpReq0055",
         "workspaceId": "wk_JedpaApi01",
         "folderId": "fl_JdpFold10",
         "name": "404 · Participante inexistente",
@@ -1781,7 +1833,7 @@
       },
       {
         "model": "http_request",
-        "id": "rq_JdpReq0054",
+        "id": "rq_JdpReq0056",
         "workspaceId": "wk_JedpaApi01",
         "folderId": "fl_JdpFold10",
         "name": "400 · Id que no es UUID",
@@ -1798,7 +1850,7 @@
       },
       {
         "model": "http_request",
-        "id": "rq_JdpReq0055",
+        "id": "rq_JdpReq0057",
         "workspaceId": "wk_JedpaApi01",
         "folderId": "fl_JdpFold10",
         "name": "403 · Operador lista usuarios",
