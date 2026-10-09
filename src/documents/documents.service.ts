@@ -18,6 +18,7 @@ import { MacroRegion } from '../catalogs/macro-regions/entities/macro-region.ent
 import { ROLES } from '../common/constants/roles';
 import { EligibilityService } from '../eligibility/eligibility.service';
 import { Participant } from '../participants/entities/participant.entity';
+import { findParticipantOrFail } from '../participants/find-participant';
 import { assertCanManageCategory } from '../participants/participant-rules';
 import { StorageService } from '../storage/storage.service';
 import { AllowedMimeType, SignedUrl } from '../storage/storage.types';
@@ -52,7 +53,7 @@ export class DocumentsService {
 
   async checklist(participantId: string): Promise<DocumentChecklistDto> {
     const manager = this.dataSource.manager;
-    const participant = await this.getParticipant(manager, participantId);
+    const participant = await findParticipantOrFail(manager, participantId);
     const [types, required, documents, eligibility] = await Promise.all([
       manager.getRepository(DocumentType).findBy({ isActive: true }),
       this.documentTypes.requiredDocumentTypeIds(participant.participantTypeId),
@@ -122,7 +123,7 @@ export class DocumentsService {
   ): Promise<DocumentChecklistDto> {
     const type = await this.documentTypes.getActiveByCode(code);
     await this.dataSource.transaction(async (manager) => {
-      const participant = await this.getParticipant(manager, participantId);
+      const participant = await findParticipantOrFail(manager, participantId);
       this.assertEditable(participant, user);
 
       const stored = await this.storage.store(
@@ -157,7 +158,7 @@ export class DocumentsService {
   ): Promise<SignedUrl> {
     const type = await this.documentTypes.getActiveByCode(code);
     const manager = this.dataSource.manager;
-    const participant = await this.getParticipant(manager, participantId);
+    const participant = await findParticipantOrFail(manager, participantId);
     if (!participant.isActive && user.role !== ROLES.ADMIN) {
       throw new ForbiddenException(
         'El participante está desactivado: solo Administrador puede ver sus archivos.',
@@ -204,7 +205,7 @@ export class DocumentsService {
     }
 
     await this.dataSource.transaction(async (manager) => {
-      const participant = await this.getParticipant(manager, participantId);
+      const participant = await findParticipantOrFail(manager, participantId);
       this.assertEditable(participant, user);
 
       const current = await manager
@@ -382,19 +383,6 @@ export class DocumentsService {
       changes,
     });
     return saved;
-  }
-
-  async getParticipant(
-    manager: EntityManager,
-    id: string,
-  ): Promise<Participant> {
-    const participant = await manager.getRepository(Participant).findOne({
-      where: { id },
-      relations: { participantType: true },
-    });
-    if (!participant)
-      throw new NotFoundException('Participante no encontrado.');
-    return participant;
   }
 
   /** Participante activo y gestionable por el rol (especiales: ADMIN y COORDINADOR). */

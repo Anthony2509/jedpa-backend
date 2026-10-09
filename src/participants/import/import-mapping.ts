@@ -1,3 +1,4 @@
+import { buildDelegationCode } from '../../delegations/delegation-code';
 import { DelegationGender } from '../../delegations/entities/delegation.entity';
 import {
   Gender,
@@ -250,7 +251,12 @@ export function parseRow(raw: RawRow, catalogs: ImportCatalogs): ParseResult {
       participantTypeId,
       participantTypeCode: typeCode,
       delegation: {
-        code: [macro, sport, category, delegationGender].join('-'),
+        code: buildDelegationCode({
+          macroCode: macro,
+          sportCode: sport,
+          category,
+          gender: delegationGender,
+        }),
         macroRegionId,
         sportId,
         category,

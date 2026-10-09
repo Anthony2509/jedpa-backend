@@ -7,7 +7,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { randomBytes } from 'node:crypto';
-import { DataSource, EntityManager } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { AuditActor } from '../audit/audit-actor';
 import { AuditService } from '../audit/audit.service';
 import { AuditAction } from '../audit/enums/audit-action.enum';
@@ -15,6 +15,7 @@ import { AuthUser } from '../auth/interfaces/auth-user.interface';
 import { EligibilityService } from '../eligibility/eligibility.service';
 import { Participant } from '../participants/entities/participant.entity';
 import { ParticipantStatus } from '../participants/enums';
+import { findParticipantOrFail } from '../participants/find-participant';
 import { assertCanManageCategory } from '../participants/participant-rules';
 import { copyLabel, nextCopyNumber } from './credential-rules';
 import { BatchIssueResultDto } from './dto/batch.dto';
@@ -40,7 +41,7 @@ export class CredentialsService {
   }
 
   async list(participantId: string): Promise<CredentialCopyDto[]> {
-    await this.getParticipant(this.dataSource.manager, participantId);
+    await findParticipantOrFail(this.dataSource.manager, participantId);
     const copies = await this.dataSource.getRepository(CredentialCopy).find({
       where: { participantId },
       relations: { printedBy: true },
@@ -67,7 +68,7 @@ export class CredentialsService {
         where: { id: participantId },
         lock: { mode: 'pessimistic_write' },
       });
-      const participant = await this.getParticipant(manager, participantId);
+      const participant = await findParticipantOrFail(manager, participantId);
       if (!participant.isActive) {
         throw new ConflictException('El participante está desactivado.');
       }
@@ -182,18 +183,5 @@ export class CredentialsService {
     });
     if (!copy) throw new NotFoundException('Ejemplar no encontrado.');
     return CredentialCopyDto.from(copy, this.verifyBaseUrl);
-  }
-
-  private async getParticipant(
-    manager: EntityManager,
-    id: string,
-  ): Promise<Participant> {
-    const participant = await manager.getRepository(Participant).findOne({
-      where: { id },
-      relations: { participantType: true },
-    });
-    if (!participant)
-      throw new NotFoundException('Participante no encontrado.');
-    return participant;
   }
 }

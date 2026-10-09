@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { EntityManager } from 'typeorm';
 import { AuditActor } from '../audit/audit-actor';
 import { AuditService } from '../audit/audit.service';
@@ -9,6 +9,7 @@ import { ParticipantDocument } from '../documents/entities/participant-document.
 import { DocumentStatus } from '../documents/enums/document-status.enum';
 import { Participant } from '../participants/entities/participant.entity';
 import { ParticipantStatus } from '../participants/enums';
+import { findParticipantOrFail } from '../participants/find-participant';
 import { canPrint, evaluateDocuments, nextStatus } from './eligibility-rules';
 
 export interface Eligibility {
@@ -47,12 +48,7 @@ export class EligibilityService {
     manager: EntityManager,
     participantId: string,
   ): Promise<Eligibility & { participant: Participant }> {
-    const participant = await manager.getRepository(Participant).findOne({
-      where: { id: participantId },
-      relations: { participantType: true },
-    });
-    if (!participant)
-      throw new NotFoundException('Participante no encontrado.');
+    const participant = await findParticipantOrFail(manager, participantId);
 
     const [requirements, documents] = await Promise.all([
       this.requirementsOf(manager, participant.participantTypeId),

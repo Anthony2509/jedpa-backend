@@ -31,8 +31,6 @@ const DOCUMENT_PREFIX: Record<IdentityDocumentType, string> = {
   [IdentityDocumentType.PASAPORTE]: 'PAS',
 };
 
-export const MAX_COPIES_PER_PDF = 100;
-
 /** Genera el PDF imprimible (120 × 155 mm) de uno o varios ejemplares ya emitidos. */
 @Injectable()
 export class CredentialPdfService {
