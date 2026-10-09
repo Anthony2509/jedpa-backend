@@ -13,6 +13,9 @@ process.env.DB_NAME = process.env.DB_TEST_NAME ?? 'jedpa_test';
 process.env.JWT_SECRET = 'jedpa-e2e-secret-'.padEnd(48, 'x');
 process.env.JWT_EXPIRES_IN = '1h';
 process.env.FRONTEND_URL ??= 'http://localhost:3000';
+// Las e2e nunca suben archivos a la nube.
+process.env.STORAGE_DRIVER = 'local';
+process.env.STORAGE_LOCAL_DIR = 'storage-test';
 
 if (!process.env.DB_NAME.endsWith('_test')) {
   throw new Error(

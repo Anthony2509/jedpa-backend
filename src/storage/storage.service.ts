@@ -1,4 +1,10 @@
-import { ConflictException, Inject, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Inject,
+  Injectable,
+  Logger,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { EntityManager } from 'typeorm';
 import { StoredFile } from './entities/stored-file.entity';
@@ -13,6 +19,7 @@ import {
 /** Punto único de acceso a archivos: los módulos de negocio no conocen al proveedor. */
 @Injectable()
 export class StorageService {
+  private readonly logger = new Logger(StorageService.name);
   private readonly maxBytes: number;
   private readonly ttlSeconds: number;
 
@@ -36,7 +43,7 @@ export class StorageService {
   ): Promise<StoredFile> {
     const mimeType = validateUpload(file, { allowed, maxBytes: this.maxBytes });
     const upload = file as Express.Multer.File;
-    const { storageKey } = await this.driver.put(upload.buffer, mimeType);
+    const { storageKey } = await this.put(upload.buffer, mimeType);
     const repo = manager.getRepository(StoredFile);
     return repo.save(
       repo.create({
@@ -48,6 +55,20 @@ export class StorageService {
         uploadedById,
       }),
     );
+  }
+
+  /** Errores del proveedor: 503 claro, sin exponer detalles internos. */
+  private async put(buffer: Buffer, mimeType: AllowedMimeType) {
+    try {
+      return await this.driver.put(buffer, mimeType);
+    } catch (error) {
+      this.logger.error(
+        `Fallo al guardar en ${this.driver.provider}: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      throw new ServiceUnavailableException(
+        'No se pudo guardar el archivo. Inténtelo nuevamente en unos minutos.',
+      );
+    }
   }
 
   /** Enlace temporal de solo lectura. */
