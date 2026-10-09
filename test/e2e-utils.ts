@@ -45,7 +45,11 @@ export async function loginAs(
   return { Authorization: `Bearer ${accessToken}` };
 }
 
-/** Busca un elemento de catálogo por código (roles por name). */
+/**
+ * Busca un elemento de catálogo por código (roles por name).
+ * Resuélvelo ANTES de construir otra petición: un await dentro de .send() cierra el
+ * servidor efímero de supertest y la petición exterior falla ("reading address").
+ */
 export async function catalogId(
   app: TestApp,
   auth: { Authorization: string },

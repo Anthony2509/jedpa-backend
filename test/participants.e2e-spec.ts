@@ -183,7 +183,7 @@ describe('Participantes, delegaciones y auditoría (e2e)', () => {
       ['perez juan', 1],
       ['PÉREZ', 1],
       ['señora', 1],
-      ['00007', 1],
+      ['0000734', 1],
       ['juan inexistente', 0],
       ['%', 0],
     ])('"%s" → %i resultado(s)', async (search, total) => {
