@@ -54,7 +54,7 @@ const EXTRA_COLUMNS = [
 /**
  * CONDICIÓN del Excel → código de tipo de participante.
  * "ENTRENADOR / DELEGADO" y "COORDINADOR DE DELEGACIÓN" quedan SIN mapear a
- * propósito: pendiente de confirmar con el cliente (PREGUNTAS-CLIENTE P2).
+ * propósito: pendiente de confirmar con el cliente (PREGUNTAS-CLIENTE 1.2).
  */
 export const CONDITION_TO_TYPE: Record<string, string> = {
   DEPORTISTA: 'DEPORTISTA',

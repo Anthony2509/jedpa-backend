@@ -139,7 +139,7 @@ PENDING_DOCUMENTS → IN_REVIEW ⇄ OBSERVED
 
 ## 10. Documentos y almacenamiento
 
-- Módulo `storage` con una interfaz (`StorageService`) cuya implementación es **Cloudinary** (exigido por el plan). Los módulos de negocio no conocen al proveedor, así que se puede cambiar si el cliente lo pide por protección de datos (ver P10).
+- Módulo `storage` con una interfaz (`StorageService`) cuya implementación es **Cloudinary** (exigido por el plan). Los módulos de negocio no conocen al proveedor, así que se puede cambiar si el cliente lo pide por protección de datos (ver pregunta 7.2).
 - Subida con `type: 'authenticated'` (nunca `upload`, que es público) y lectura mediante URLs firmadas con expiración corta, generadas solo tras validar permisos.
 - Los documentos de menores (certificado médico, seguro, foto) son **privados**: entrega autenticada con URLs firmadas de corta duración. Nunca URLs públicas permanentes.
 - Validación de tipo real del archivo (magic bytes, no solo la extensión) y tamaño máximo.

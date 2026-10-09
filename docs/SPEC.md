@@ -38,7 +38,7 @@ Coinciden con los tipos de credencial que se imprimen.
 | Código | Nombre | Categoría | Acceso en credencial | Requisitos documentales |
 |---|---|---|---|---|
 | `DEPORTISTA` | Deportista | Regular | por confirmar | Resolución Directoral, DNI, Certificado médico, Seguro, Foto |
-| `ACOMPANANTE` | Acompañante | Regular | por confirmar | Deportista que no cumple algún documento obligatorio (ver pregunta P1) |
+| `ACOMPANANTE` | Acompañante | Regular | por confirmar | Deportista que no cumple algún documento obligatorio (ver pregunta 1.1) |
 | `DELEGADO` | Delegado | Regular | por confirmar | Resolución Directoral, DNI, Foto |
 | `ENTRENADOR` | Entrenador | Regular | por confirmar | Resolución Directoral, DNI |
 | `MINEDU` | MINEDU | Especial | por confirmar | Ninguno: se crea e imprime directamente |
@@ -47,7 +47,7 @@ Coinciden con los tipos de credencial que se imprimen.
 | `PROVEEDOR_PARCIAL` | Proveedor acceso parcial | Especial | Parcial | Ninguno |
 
 - Los requisitos se modelan como **datos** (tabla `document_requirements`: tipo de participante × tipo de documento × obligatorio), no como código. Así un cambio del cliente no requiere desplegar.
-- **Paradeportista** no es un tipo propio: es un Deportista con discapacidad (tipo y clase de discapacidad en su ficha). Ver P3.
+- **Paradeportista** no es un tipo propio: es un Deportista con discapacidad (tipo y clase de discapacidad en su ficha). Ver pregunta 1.3.
 
 ## 4. Documentos — CONFIRMADO (catálogo)
 
@@ -89,7 +89,7 @@ Formatos y tamaños máximos de archivo: **SUPUESTO**, PDF/JPG/PNG de hasta 5 MB
 | `maternalLastName` | no | APELLIDO MATERNO |
 | `gender` | regular: sí | `FEMALE` / `MALE` (FEMENINO / MASCULINO en el Excel) |
 | `birthDate` | regular: sí | FECHA DE NACIMIENTO |
-| `participantTypeId` | sí | CONDICIÓN (ver tabla de equivalencias, P2) |
+| `participantTypeId` | sí | CONDICIÓN (ver tabla de equivalencias, pregunta 1.2) |
 | `delegationId` | regulares: sí | DELEGACIÓN |
 | `institution` | especiales: sí | "Servicio / Institución" impreso en la credencial especial |
 | `schoolName`, `schoolModularCode` | no | I.E., COD_MOD |
@@ -118,7 +118,7 @@ Formatos y tamaños máximos de archivo: **SUPUESTO**, PDF/JPG/PNG de hasta 5 MB
 
 - El estado documental (`PENDING_DOCUMENTS`, `IN_REVIEW`, `OBSERVED`, `READY_TO_PRINT`) se **recalcula** a partir de los documentos y los requisitos de su tipo, no se edita a mano.
 - Los tipos especiales nacen directamente en `READY_TO_PRINT`.
-- Si un participante ya impreso o entregado recibe una observación, la impresión de duplicados se vuelve a bloquear. Ver P6.
+- Si un participante ya impreso o entregado recibe una observación, la impresión de duplicados se vuelve a bloquear. Ver pregunta 4.4.
 
 ## 8. Credenciales, impresión y QR
 
@@ -126,7 +126,7 @@ Formatos y tamaños máximos de archivo: **SUPUESTO**, PDF/JPG/PNG de hasta 5 MB
 - Se genera un **PDF a medida exacta** (120 × 155 mm, página 1 anverso y página 2 reverso con QR), con una plantilla por tipo de participante.
 - **Calibración obligatoria:** las muestras del cliente muestran texto impreso dos veces y desalineado. La plantilla tendrá desplazamientos X/Y configurables y una "hoja de prueba" antes de imprimir en lote.
 - **Original + hasta 3 duplicados** (CONFIRMADO): cada ejemplar (`copyNumber` de 0 a 3) registra su propia impresión (fecha, usuario y motivo si es duplicado) y su propia entrega. Un duplicado no se emite sin motivo.
-- **QR:** contiene una URL de verificación con un **token aleatorio**, sin DNI ni datos personales. Al escanearlo muestra el **estado de la documentación** (CONFIRMADO). Qué ve un usuario sin sesión iniciada está por definir (P5). Nunca expone archivos.
+- **QR:** contiene una URL de verificación con un **token aleatorio**, sin DNI ni datos personales. Al escanearlo muestra el **estado de la documentación** (CONFIRMADO). Qué ve un usuario sin sesión iniciada está por definir (pregunta 4.5). Nunca expone archivos.
 - Los artes 2026 aún no se han entregado.
 
 ## 9. Entrega física — CONFIRMADO
@@ -158,7 +158,7 @@ Formatos y tamaños máximos de archivo: **SUPUESTO**, PDF/JPG/PNG de hasta 5 MB
 - Se tratan datos de **menores** y **datos de salud** (certificado médico y de discapacidad), que son sensibles según la Ley 29733 de protección de datos personales.
 - **Acceso a documentos:** la ficha nunca incluye enlaces; se piden de uno en uno y cada emisión queda auditada (`FILE_ACCESS`: quién, cuándo, qué documento). Los datos de salud caducan en 60 s y el resto en 5 min. Máximo 30 enlaces por minuto. De un participante desactivado, solo ADMIN ve archivos. Tipo real del archivo verificado por su contenido; PDF, JPG o PNG de hasta 5 MB.
 - Los archivos se guardan en **Cloudinary** (exigido por el plan) con entrega **privada** (`type: authenticated`) y URLs firmadas de corta duración. Nunca URLs públicas.
-- **El Excel del cliente contiene usuarios y contraseñas en texto plano** de unos 2.700 participantes (columnas `USUARIO` y `PASSWORD`, hoja *ID GENERAL*). El importador descarta esas columnas y nunca las registra en logs ni en la auditoría. Se recomienda al cliente no seguir circulando ese archivo y cambiar esas contraseñas (P9).
+- **El Excel del cliente contiene usuarios y contraseñas en texto plano** de unos 2.700 participantes (columnas `USUARIO` y `PASSWORD`, hoja *ID GENERAL*). El importador descarta esas columnas y nunca las registra en logs ni en la auditoría. Se recomienda al cliente no seguir circulando ese archivo y cambiar esas contraseñas (pregunta 2.4).
 
 ## 12. Fuera del alcance del plan original
 
@@ -219,9 +219,9 @@ Los catálogos devuelven la **lista completa** (sin paginar, pensada para select
 ¹ Credenciales especiales: solo ADMIN y COORDINADOR. ² De un participante desactivado, solo ADMIN.
 
 **Decisiones del Sprint 2 (por defecto, a confirmar con el cliente):**
-- Un duplicado **revoca el QR** de los ejemplares anteriores (P6). El QR revocado responde `valid: false` sin datos personales.
-- Acompañante sin requisitos documentales: queda listo para imprimir (P1).
-- Importación: los ya registrados se **omiten**; las condiciones "Entrenador / Delegado" y "Coordinador de delegación" y la disciplina "PAT" producen error de fila (P2, P12). Los estados documentales del Excel no se importan: aprobar exige el archivo real.
+- Un duplicado **revoca el QR** de los ejemplares anteriores (pregunta 4.4). El QR revocado responde `valid: false` sin datos personales.
+- Acompañante sin requisitos documentales: queda listo para imprimir (pregunta 1.1).
+- Importación: los ya registrados se **omiten**; las condiciones "Entrenador / Delegado" y "Coordinador de delegación" y la disciplina "PAT" producen error de fila (preguntas 1.2 y 2.1). Los estados documentales del Excel no se importan: aprobar exige el archivo real.
 - Posiciones del PDF tomadas de la credencial de muestra; se ajustan con los artes 2026 (`src/credentials/pdf/credential-layout.ts`).
 
 Sprints siguientes: entrega física por ejemplar, diplomas, dashboard, reportes y exportación Excel.
