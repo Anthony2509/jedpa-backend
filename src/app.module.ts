@@ -22,6 +22,7 @@ import { ParticipantsModule } from './participants/participants.module';
 import { RolesModule } from './roles/roles.module';
 import { StorageModule } from './storage/storage.module';
 import { UsersModule } from './users/users.module';
+import { VerificationModule } from './verification/verification.module';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { UsersModule } from './users/users.module';
     StorageModule,
     DocumentsModule,
     CredentialsModule,
+    VerificationModule,
   ],
   providers: [
     // Orden: límite de peticiones → autenticación → roles.

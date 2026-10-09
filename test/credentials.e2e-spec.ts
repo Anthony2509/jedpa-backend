@@ -226,6 +226,76 @@ describe('Impresión de credenciales (e2e)', () => {
     await issue(ids.special, { copyNumber: 0 }).expect(201);
   });
 
+  describe('Verificación pública del QR', () => {
+    const tokenOf = (copy: CopyBody) => copy.verificationUrl.split('/').pop()!;
+    let copies: CopyBody[];
+
+    beforeAll(async () => {
+      copies = (
+        await request(server())
+          .get(`/api/participants/${ids.regular}/credentials`)
+          .set(admin)
+          .expect(200)
+      ).body as CopyBody[];
+    });
+
+    it('sin sesión muestra lo mínimo y el estado documental, sin DNI', async () => {
+      const res = await request(server())
+        .get(`/api/verify/${tokenOf(copies[3])}`)
+        .expect(200);
+      expect(res.body).toMatchObject({
+        valid: true,
+        enabled: true,
+        credential: 'Duplicado 3',
+        participant: {
+          fullName: 'ROSA IMPRESIÓN',
+          participantType: 'Deportista',
+          delegation: 'M5-VOL-A-D',
+          institution: null,
+        },
+      });
+      const body = res.body as {
+        documents: { name: string; status: string }[];
+      };
+      expect(body.documents).toHaveLength(5);
+      expect(body.documents.every((d) => d.status === 'APPROVED')).toBe(true);
+      expect(JSON.stringify(res.body)).not.toContain('41000001');
+      expect(JSON.stringify(res.body)).not.toMatch(/url|file|storage/i);
+    });
+
+    it('un ejemplar reemplazado no es válido y no revela datos', async () => {
+      const res = await request(server())
+        .get(`/api/verify/${tokenOf(copies[0])}`)
+        .expect(200);
+      expect(res.body).toMatchObject({
+        valid: false,
+        enabled: false,
+        credential: 'Original',
+        participant: null,
+        documents: [],
+      });
+    });
+
+    it('refleja al instante una observación posterior a la impresión', async () => {
+      await request(server())
+        .patch(`/api/participants/${ids.regular}/documents/SEGURO/review`)
+        .set(admin)
+        .send({ status: 'OBSERVED', observation: 'Póliza vencida.' })
+        .expect(200);
+      const res = await request(server())
+        .get(`/api/verify/${tokenOf(copies[3])}`)
+        .expect(200);
+      expect(res.body).toMatchObject({ valid: true, enabled: false });
+    });
+
+    it('un token inexistente o malformado responde 404', async () => {
+      await request(server())
+        .get('/api/verify/no-existe-este-token-123456')
+        .expect(404);
+      await request(server()).get('/api/verify/..%2F..%2Fetc').expect(404);
+    });
+  });
+
   it('cada impresión queda auditada (PRINT / REPRINT)', async () => {
     const res = await request(server())
       .get('/api/audit-logs')
