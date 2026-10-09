@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuditModule } from '../audit/audit.module';
 import { ParticipantTypesModule } from '../catalogs/participant-types/participant-types.module';
 import { DelegationsModule } from '../delegations/delegations.module';
+import { EligibilityModule } from '../eligibility/eligibility.module';
 import { Participant } from './entities/participant.entity';
 import { ParticipantsController } from './participants.controller';
 import { ParticipantsService } from './participants.service';
@@ -13,6 +14,7 @@ import { ParticipantsService } from './participants.service';
     ParticipantTypesModule,
     DelegationsModule,
     AuditModule,
+    EligibilityModule,
   ],
   controllers: [ParticipantsController],
   providers: [ParticipantsService],

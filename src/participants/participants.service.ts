@@ -24,6 +24,7 @@ import {
 } from '../common/pagination';
 import { escapeLike } from '../common/utils/text';
 import { DelegationsService } from '../delegations/delegations.service';
+import { EligibilityService } from '../eligibility/eligibility.service';
 import { CreateParticipantDto } from './dto/create-participant.dto';
 import { ParticipantQueryDto } from './dto/participant-query.dto';
 import { UpdateParticipantDto } from './dto/update-participant.dto';
@@ -34,7 +35,6 @@ import {
   assertValidComposition,
   assertValidDocumentNumber,
   hasPrintedCredential,
-  initialStatusFor,
 } from './participant-rules';
 
 const ENTITY = 'Participant';
@@ -65,6 +65,7 @@ export class ParticipantsService {
     private readonly participantTypes: ParticipantTypesService,
     private readonly delegations: DelegationsService,
     private readonly audit: AuditService,
+    private readonly eligibility: EligibilityService,
   ) {}
 
   async findAll(
@@ -153,7 +154,10 @@ export class ParticipantsService {
     const id = await this.dataSource.transaction(async (manager) => {
       const repo = manager.getRepository(Participant);
       const participant = await repo.save(
-        repo.create({ ...dto, status: initialStatusFor(type.category) }),
+        repo.create({
+          ...dto,
+          status: await this.eligibility.initialStatus(manager, type),
+        }),
       );
       await this.audit.record(manager, actor, {
         action: AuditAction.CREATE,
@@ -195,11 +199,11 @@ export class ParticipantsService {
         );
         assertCanManageCategory(user.role, type.category);
       }
-      const categoryChanged =
-        type.category !== current.participantType.category;
-      if (categoryChanged && hasPrintedCredential(current.status)) {
+      // La credencial impresa muestra el tipo: no puede cambiar después de imprimir.
+      const typeChanged = type.id !== current.participantTypeId;
+      if (typeChanged && hasPrintedCredential(current.status)) {
         throw new ConflictException(
-          'No se puede cambiar a un tipo de otra categoría si la credencial ya fue impresa.',
+          'No se puede cambiar el tipo de participante si la credencial ya fue impresa.',
         );
       }
 
@@ -230,10 +234,7 @@ export class ParticipantsService {
         birthDate: pick('birthDate') ?? null,
       });
 
-      const changes = {
-        ...dto,
-        ...(categoryChanged && { status: initialStatusFor(type.category) }),
-      };
+      const changes = { ...dto };
       const auditChanges = diffChanges(current, changes);
       if (!Object.keys(auditChanges).length) return;
 
@@ -248,6 +249,10 @@ export class ParticipantsService {
         participantId: id,
         changes: auditChanges,
       });
+      // Otro tipo implica otros requisitos: el motor recalcula el estado.
+      if (typeChanged) {
+        await this.eligibility.recalculate(manager, id, actor);
+      }
     });
     return this.findOne(id);
   }

@@ -7,7 +7,6 @@ import {
   assertValidComposition,
   assertValidDocumentNumber,
   hasPrintedCredential,
-  initialStatusFor,
 } from './participant-rules';
 
 const { REGULAR, SPECIAL } = ParticipantTypeCategory;
@@ -32,11 +31,6 @@ describe('participant-rules', () => {
         BadRequestException,
       );
     });
-  });
-
-  it('los especiales nacen listos para imprimir; los regulares, pendientes', () => {
-    expect(initialStatusFor(SPECIAL)).toBe(ParticipantStatus.READY_TO_PRINT);
-    expect(initialStatusFor(REGULAR)).toBe(ParticipantStatus.PENDING_DOCUMENTS);
   });
 
   it('el OPERADOR no gestiona credenciales especiales', () => {
