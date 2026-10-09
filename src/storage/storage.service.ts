@@ -72,7 +72,7 @@ export class StorageService {
   }
 
   /** Enlace temporal de solo lectura. */
-  accessUrl(file: StoredFile): Promise<SignedUrl> {
+  accessUrl(file: StoredFile, maxTtlSeconds?: number): Promise<SignedUrl> {
     if (file.provider !== this.driver.provider) {
       throw new ConflictException(
         'El archivo está en otro proveedor de almacenamiento.',
@@ -81,7 +81,7 @@ export class StorageService {
     return this.driver.signedUrl(
       file.storageKey,
       file.mimeType as AllowedMimeType,
-      this.ttlSeconds,
+      Math.min(this.ttlSeconds, maxTtlSeconds ?? this.ttlSeconds),
     );
   }
 }

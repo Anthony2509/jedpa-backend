@@ -7,6 +7,7 @@ import {
   UploadedFile,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { Actor } from '../audit/audit-actor';
 import type { AuditActor } from '../audit/audit-actor';
 import type { AuthUser } from '../auth/interfaces/auth-user.interface';
@@ -46,13 +47,15 @@ export class ResolutionsController {
   }
 
   @Get('file')
+  @Throttle({ default: { limit: 30, ttl: 60_000 } })
   @ApiOperation({
     summary: 'Enlace temporal para ver la Resolución Directoral',
   })
   fileUrl(
     @Param('macroRegionId', UuidParamPipe) macroRegionId: string,
+    @Actor() actor: AuditActor,
   ): Promise<FileUrlDto> {
-    return this.documents.resolutionUrl(macroRegionId);
+    return this.documents.resolutionUrl(macroRegionId, actor);
   }
 
   @Post('links')

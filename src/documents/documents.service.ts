@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -14,6 +15,7 @@ import { AuthUser } from '../auth/interfaces/auth-user.interface';
 import { DocumentTypesService } from '../catalogs/document-types/document-types.service';
 import { DocumentType } from '../catalogs/document-types/entities/document-type.entity';
 import { MacroRegion } from '../catalogs/macro-regions/entities/macro-region.entity';
+import { ROLES } from '../common/constants/roles';
 import { EligibilityService } from '../eligibility/eligibility.service';
 import { Participant } from '../participants/entities/participant.entity';
 import { assertCanManageCategory } from '../participants/participant-rules';
@@ -27,6 +29,8 @@ import { DocumentStatus } from './enums/document-status.enum';
 const ENTITY = 'ParticipantDocument';
 export const RESOLUTION_CODE = 'RESOLUCION_DIRECTORAL';
 const PHOTO_CODE = 'FOTO';
+/** Vigencia máxima de enlaces a documentos con datos de salud (menores). */
+export const SENSITIVE_URL_TTL_SECONDS = 60;
 
 /** La foto se imprime en la credencial: solo imagen. El resto admite PDF o imagen. */
 const allowedMimeTypes = (code: string): AllowedMimeType[] =>
@@ -139,18 +143,46 @@ export class DocumentsService {
     return this.checklist(participantId);
   }
 
-  async fileUrl(participantId: string, code: string): Promise<SignedUrl> {
+  /**
+   * Enlace temporal a un documento. Protección de datos de menores:
+   * - cada emisión queda auditada (FILE_ACCESS), con quién y qué documento;
+   * - los documentos con datos de salud caducan antes (SENSITIVE_URL_TTL_SECONDS);
+   * - de un participante desactivado, solo ADMIN puede ver archivos.
+   */
+  async fileUrl(
+    participantId: string,
+    code: string,
+    user: AuthUser,
+    actor: AuditActor,
+  ): Promise<SignedUrl> {
     const type = await this.documentTypes.getActiveByCode(code);
-    const doc = await this.dataSource
-      .getRepository(ParticipantDocument)
-      .findOne({
-        where: { participantId, documentTypeId: type.id },
-        relations: { file: true },
-      });
+    const manager = this.dataSource.manager;
+    const participant = await this.getParticipant(manager, participantId);
+    if (!participant.isActive && user.role !== ROLES.ADMIN) {
+      throw new ForbiddenException(
+        'El participante está desactivado: solo Administrador puede ver sus archivos.',
+      );
+    }
+    const doc = await manager.getRepository(ParticipantDocument).findOne({
+      where: { participantId, documentTypeId: type.id },
+      relations: { file: true },
+    });
     if (!doc?.file) {
       throw new NotFoundException('El documento no tiene un archivo cargado.');
     }
-    return this.storage.accessUrl(doc.file);
+
+    const url = await this.storage.accessUrl(
+      doc.file,
+      type.isSensitive ? SENSITIVE_URL_TTL_SECONDS : undefined,
+    );
+    await this.audit.record(manager, actor, {
+      action: AuditAction.FILE_ACCESS,
+      entity: ENTITY,
+      entityId: doc.id,
+      participantId,
+      changes: { documentType: { old: type.code, new: type.code } },
+    });
+    return url;
   }
 
   // ── Revisión ─────────────────────────────────────────────────────
@@ -235,7 +267,10 @@ export class DocumentsService {
     });
   }
 
-  async resolutionUrl(macroRegionId: string): Promise<SignedUrl> {
+  async resolutionUrl(
+    macroRegionId: string,
+    actor: AuditActor,
+  ): Promise<SignedUrl> {
     const region = await this.dataSource.getRepository(MacroRegion).findOne({
       where: { id: macroRegionId },
       relations: { resolutionFile: true },
@@ -246,7 +281,14 @@ export class DocumentsService {
         'La macrorregión no tiene Resolución Directoral cargada.',
       );
     }
-    return this.storage.accessUrl(region.resolutionFile);
+    const url = await this.storage.accessUrl(region.resolutionFile);
+    await this.audit.record(this.dataSource.manager, actor, {
+      action: AuditAction.FILE_ACCESS,
+      entity: 'MacroRegion',
+      entityId: region.id,
+      changes: { documentType: { old: RESOLUTION_CODE, new: RESOLUTION_CODE } },
+    });
+    return url;
   }
 
   /**

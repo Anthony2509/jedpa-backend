@@ -8,6 +8,7 @@ import {
   UploadedFile,
 } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { Actor } from '../audit/audit-actor';
 import type { AuditActor } from '../audit/audit-actor';
 import type { AuthUser } from '../auth/interfaces/auth-user.interface';
@@ -79,12 +80,19 @@ export class ParticipantDocumentsController {
   }
 
   @Get(':code/file')
+  @Throttle({ default: { limit: 30, ttl: 60_000 } })
   @ApiParam(CODE_PARAM)
-  @ApiOperation({ summary: 'Enlace temporal para ver el archivo' })
+  @ApiOperation({
+    summary: 'Enlace temporal para ver el archivo',
+    description:
+      'Cada enlace queda auditado (FILE_ACCESS). Datos de salud: vigencia de 60 s. Máximo 30 por minuto.',
+  })
   fileUrl(
     @Param('participantId', UuidParamPipe) participantId: string,
     @Param('code') code: string,
+    @CurrentUser() user: AuthUser,
+    @Actor() actor: AuditActor,
   ): Promise<FileUrlDto> {
-    return this.documents.fileUrl(participantId, code);
+    return this.documents.fileUrl(participantId, code, user, actor);
   }
 }

@@ -156,6 +156,7 @@ Formatos y tamaños máximos de archivo: **SUPUESTO**, PDF/JPG/PNG de hasta 5 MB
 ## 11. Seguridad y datos personales
 
 - Se tratan datos de **menores** y **datos de salud** (certificado médico y de discapacidad), que son sensibles según la Ley 29733 de protección de datos personales.
+- **Acceso a documentos:** la ficha nunca incluye enlaces; se piden de uno en uno y cada emisión queda auditada (`FILE_ACCESS`: quién, cuándo, qué documento). Los datos de salud caducan en 60 s y el resto en 5 min. Máximo 30 enlaces por minuto. De un participante desactivado, solo ADMIN ve archivos. Tipo real del archivo verificado por su contenido; PDF, JPG o PNG de hasta 5 MB.
 - Los archivos se guardan en **Cloudinary** (exigido por el plan) con entrega **privada** (`type: authenticated`) y URLs firmadas de corta duración. Nunca URLs públicas.
 - **El Excel del cliente contiene usuarios y contraseñas en texto plano** de unos 2.700 participantes (columnas `USUARIO` y `PASSWORD`, hoja *ID GENERAL*). El importador descarta esas columnas y nunca las registra en logs ni en la auditoría. Se recomienda al cliente no seguir circulando ese archivo y cambiar esas contraseñas (P9).
 

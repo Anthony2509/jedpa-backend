@@ -401,6 +401,60 @@ describe('Documentos y Resolución Directoral (e2e)', () => {
     });
   });
 
+  describe('Protección de documentos de menores', () => {
+    const fileUrl = (participantId: string, code: string, auth: Auth = admin) =>
+      request(server())
+        .get(`/api/participants/${participantId}/documents/${code}/file`)
+        .set(auth);
+
+    const secondsLeft = (body: unknown) =>
+      (new Date((body as { expiresAt: string }).expiresAt).getTime() -
+        Date.now()) /
+      1000;
+
+    it('los datos de salud tienen enlaces más cortos (60 s)', async () => {
+      const sensitive = await fileUrl(
+        ids.participant,
+        'CERTIFICADO_MEDICO',
+      ).expect(200);
+      const regular = await fileUrl(ids.participant, 'SEGURO').expect(200);
+      expect(secondsLeft(sensitive.body)).toBeLessThanOrEqual(60);
+      expect(secondsLeft(regular.body)).toBeGreaterThan(60);
+    });
+
+    it('cada enlace emitido queda auditado con quién lo pidió', async () => {
+      await fileUrl(ids.participant, 'FOTO', operator).expect(200);
+      const res = await request(server())
+        .get('/api/audit-logs')
+        .query({ participantId: ids.participant, action: 'FILE_ACCESS' })
+        .set(admin)
+        .expect(200);
+      const logs = (
+        res.body as {
+          data: {
+            user: { email: string };
+            changes: { documentType: { new: string } };
+          }[];
+        }
+      ).data;
+      expect(logs[0]).toMatchObject({
+        user: { email: devUser('OPERADOR').email },
+        changes: { documentType: { new: 'FOTO' } },
+      });
+      expect(logs.length).toBeGreaterThanOrEqual(3);
+    });
+
+    it('de un participante desactivado solo ADMIN ve los archivos', async () => {
+      await request(server())
+        .patch(`/api/participants/${ids.second}/active`)
+        .set(admin)
+        .send({ isActive: false })
+        .expect(200);
+      await fileUrl(ids.second, 'RESOLUCION_DIRECTORAL', operator).expect(403);
+      await fileUrl(ids.second, 'RESOLUCION_DIRECTORAL', admin).expect(200);
+    });
+  });
+
   it('cada subida queda en la auditoría del participante', async () => {
     const res = await request(server())
       .get('/api/audit-logs')
