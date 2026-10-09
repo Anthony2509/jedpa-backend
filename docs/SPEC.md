@@ -197,4 +197,31 @@ Convenciones:
 
 Los catálogos devuelven la **lista completa** (sin paginar, pensada para selectores), solo los activos salvo `?includeInactive=true`. En el Sprint 1 solo los lugares de entrega se editan desde la API; los demás se cargan con el seed y su edición llega con el motor de reglas (S2-05).
 
-Sprints siguientes: importación Excel (preview y commit), documentos y revisión, credenciales (PDF, QR, duplicados), entregas, diplomas, reportes y exportación.
+## 14. Contrato de la API — Sprint 2
+
+| Método | Ruta | Rol |
+|---|---|---|
+| GET | `/api/participants/:id/documents` (ficha: requisitos, estados, archivos, `eligibility`) | Autenticado |
+| POST | `/api/participants/:id/documents/:code` (multipart `file`: sube o reemplaza; queda PENDING) | ADMIN, COORDINADOR, OPERADOR¹ |
+| PATCH | `/api/participants/:id/documents/:code/review` (`APPROVED` \| `OBSERVED` \| `NOT_APPLICABLE` \| `PENDING`) | ADMIN, COORDINADOR, OPERADOR¹ |
+| GET | `/api/participants/:id/documents/:code/file` (enlace temporal, auditado; 30/min) | Autenticado² |
+| POST | `/api/macro-regions/:id/resolution` (multipart PDF) | ADMIN, COORDINADOR |
+| GET | `/api/macro-regions/:id/resolution/file` | Autenticado |
+| POST | `/api/macro-regions/:id/resolution/links` (`participantIds[]`: vincula = aprueba) | ADMIN, COORDINADOR, OPERADOR |
+| GET | `/api/participants/:id/credentials` | Autenticado |
+| POST | `/api/participants/:id/credentials` (`copyNumber` esperado, `reason` en duplicados) | ADMIN, COORDINADOR, OPERADOR¹ |
+| GET | `/api/participants/:id/credentials/:copyNumber/pdf` | ADMIN, COORDINADOR, OPERADOR¹ |
+| POST | `/api/credentials/batch` (`participantIds[]`, emite originales) · `/api/credentials/pdf` (`copyIds[]`) | ADMIN, COORDINADOR, OPERADOR¹ |
+| GET | `/api/credentials/test-sheet` (hoja de calibración) | ADMIN, COORDINADOR |
+| GET | `/api/verify/:token` (QR; 60/min) | **Pública** |
+| POST | `/api/participants/import/preview` · `/api/participants/import` (multipart `.xlsx`) | ADMIN, COORDINADOR |
+
+¹ Credenciales especiales: solo ADMIN y COORDINADOR. ² De un participante desactivado, solo ADMIN.
+
+**Decisiones del Sprint 2 (por defecto, a confirmar con el cliente):**
+- Un duplicado **revoca el QR** de los ejemplares anteriores (P6). El QR revocado responde `valid: false` sin datos personales.
+- Acompañante sin requisitos documentales: queda listo para imprimir (P1).
+- Importación: los ya registrados se **omiten**; las condiciones "Entrenador / Delegado" y "Coordinador de delegación" y la disciplina "PAT" producen error de fila (P2, P12). Los estados documentales del Excel no se importan: aprobar exige el archivo real.
+- Posiciones del PDF tomadas de la credencial de muestra; se ajustan con los artes 2026 (`src/credentials/pdf/credential-layout.ts`).
+
+Sprints siguientes: entrega física por ejemplar, diplomas, dashboard, reportes y exportación Excel.
