@@ -69,3 +69,5 @@ Los estados documentales (`PENDING_DOCUMENTS` → `READY_TO_PRINT`) se **calcula
 - Detente al final de cada tarea y espera confirmación.
 
 Especificación funcional: `docs/SPEC.md`. Arquitectura: `docs/ARCHITECTURE.md`.
+
+**Al empezar un chat nuevo, leer `docs/PROJECT_STATUS.md`:** estado actual, endpoints, qué funciona, qué falta y qué está listo para conectar con el frontend.
