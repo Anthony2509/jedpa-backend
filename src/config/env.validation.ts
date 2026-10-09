@@ -22,6 +22,35 @@ export const envValidationSchema = Joi.object({
   FRONTEND_URL: Joi.string()
     .uri({ scheme: ['http', 'https'] })
     .required(),
+  /** URL pública de esta API: base de los enlaces firmados de archivos locales. */
+  API_PUBLIC_URL: Joi.string()
+    .uri({ scheme: ['http', 'https'] })
+    .default('http://localhost:4000'),
+
+  // Almacenamiento de archivos (documentos de participantes).
+  STORAGE_DRIVER: Joi.string().valid('local', 'cloudinary').default('local'),
+  STORAGE_LOCAL_DIR: Joi.string().default('storage'),
+  FILE_URL_TTL_SECONDS: Joi.number().integer().min(30).max(3600).default(300),
+  UPLOAD_MAX_BYTES: Joi.number()
+    .integer()
+    .min(1024)
+    .default(5 * 1024 * 1024),
+  CLOUDINARY_FOLDER: Joi.string().default('jedpa'),
+  CLOUDINARY_CLOUD_NAME: Joi.string().when('STORAGE_DRIVER', {
+    is: 'cloudinary',
+    then: Joi.required(),
+    otherwise: Joi.optional().allow(''),
+  }),
+  CLOUDINARY_API_KEY: Joi.string().when('STORAGE_DRIVER', {
+    is: 'cloudinary',
+    then: Joi.required(),
+    otherwise: Joi.optional().allow(''),
+  }),
+  CLOUDINARY_API_SECRET: Joi.string().when('STORAGE_DRIVER', {
+    is: 'cloudinary',
+    then: Joi.required(),
+    otherwise: Joi.optional().allow(''),
+  }),
 });
 
 export const envValidationOptions: Joi.ValidationOptions = {

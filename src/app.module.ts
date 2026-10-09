@@ -18,6 +18,7 @@ import { DelegationsModule } from './delegations/delegations.module';
 import { HealthModule } from './health/health.module';
 import { ParticipantsModule } from './participants/participants.module';
 import { RolesModule } from './roles/roles.module';
+import { StorageModule } from './storage/storage.module';
 import { UsersModule } from './users/users.module';
 
 @Module({
@@ -45,6 +46,7 @@ import { UsersModule } from './users/users.module';
     CatalogsModule,
     DelegationsModule,
     ParticipantsModule,
+    StorageModule,
   ],
   providers: [
     // Orden: límite de peticiones → autenticación → roles.
