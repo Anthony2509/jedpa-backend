@@ -133,7 +133,7 @@ export const DOCUMENT_TYPE_SEEDS = [
   { code: 'FOTO', name: 'Foto', isSensitive: false },
 ];
 
-/** Tabla "documentos obligatorios según perfil" del cliente. ACOMPANANTE pendiente (P1). */
+/** Tabla "documentos obligatorios según perfil" del cliente. ACOMPANANTE pendiente (pregunta 1.1). */
 export const DOCUMENT_REQUIREMENT_SEEDS: Record<string, string[]> = {
   DEPORTISTA: [
     'RESOLUCION_DIRECTORAL',
@@ -151,7 +151,7 @@ export const MACRO_REGION_SEEDS = Array.from({ length: 8 }, (_, i) => ({
   name: `Macrorregión ${i + 1}`,
 }));
 
-/** Abreviaturas del Excel de referencia. Lista oficial 2026 pendiente (P12). */
+/** Abreviaturas del Excel de referencia. Lista oficial 2026 pendiente (pregunta 2.1). */
 export const SPORT_SEEDS = [
   { code: 'AJD', name: 'Ajedrez' },
   { code: 'ATL', name: 'Atletismo' },

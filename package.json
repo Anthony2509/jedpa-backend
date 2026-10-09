@@ -1,7 +1,7 @@
 {
   "name": "jedpa-backend",
   "version": "0.0.1",
-  "description": "",
+  "description": "API del sistema de credenciales de los Juegos Escolares Deportivos y Paradeportivos (JEDPA)",
   "author": "",
   "private": true,
   "license": "UNLICENSED",
@@ -24,7 +24,11 @@
     "migration:revert": "typeorm-ts-node-commonjs migration:revert -d src/database/data-source.ts",
     "migration:show": "typeorm-ts-node-commonjs migration:show -d src/database/data-source.ts",
     "seed": "ts-node src/database/seeds/seed.ts",
-    "yaak:generate": "node docs/yaak/generate-collection.mjs"
+    "yaak:generate": "node docs/yaak/generate-collection.mjs",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "migration:run:prod": "typeorm migration:run -d dist/database/data-source.js",
+    "seed:prod": "node dist/database/seeds/seed.js",
+    "release": "npm run migration:run:prod && npm run seed:prod"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
@@ -39,11 +43,15 @@
     "bcrypt": "^6.0.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
+    "cloudinary": "^2.11.0",
+    "exceljs": "^4.4.0",
     "helmet": "^8.3.0",
     "joi": "^18.2.9",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
+    "pdfkit": "^0.20.2",
     "pg": "^8.23.1",
+    "qrcode": "^1.5.4",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "typeorm": "^1.1.2"
@@ -57,8 +65,11 @@
     "@types/bcrypt": "^6.0.0",
     "@types/express": "^5.0.0",
     "@types/jest": "^30.0.0",
+    "@types/multer": "^2.3.0",
     "@types/node": "^22.10.7",
     "@types/passport-jwt": "^4.0.1",
+    "@types/pdfkit": "^0.17.6",
+    "@types/qrcode": "^1.5.6",
     "@types/supertest": "^6.0.2",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
@@ -91,5 +102,10 @@
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
-  }
+  },
+  "engines": {
+    "node": ">=24",
+    "npm": ">=11.19"
+  },
+  "packageManager": "npm@11.19.0"
 }

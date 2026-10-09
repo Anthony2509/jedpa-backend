@@ -45,7 +45,8 @@ export class AuditLog {
   @Column({ type: 'varchar', length: 45, nullable: true })
   ip: string | null;
 
+  /** clock_timestamp(): hora real de cada inserción, aun dentro de una misma transacción. */
   @Index()
-  @CreateDateColumn({ type: 'timestamptz' })
+  @CreateDateColumn({ type: 'timestamptz', default: () => 'clock_timestamp()' })
   createdAt: Date;
 }

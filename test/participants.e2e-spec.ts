@@ -183,7 +183,7 @@ describe('Participantes, delegaciones y auditoría (e2e)', () => {
       ['perez juan', 1],
       ['PÉREZ', 1],
       ['señora', 1],
-      ['00007', 1],
+      ['0000734', 1],
       ['juan inexistente', 0],
       ['%', 0],
     ])('"%s" → %i resultado(s)', async (search, total) => {
@@ -239,16 +239,22 @@ describe('Participantes, delegaciones y auditoría (e2e)', () => {
         .set(admin)
         .expect(200);
       const logs = (res.body as AuditBody).data;
-      expect(logs.map((l) => l.action)).toEqual(['UPDATE', 'UPDATE', 'CREATE']);
+      expect(logs.map((l) => l.action)).toEqual([
+        'STATUS_CHANGE',
+        'UPDATE',
+        'UPDATE',
+        'CREATE',
+      ]);
       expect(logs[0].changes.status).toEqual({
         old: 'PENDING_DOCUMENTS',
         new: 'READY_TO_PRINT',
       });
-      expect(logs[1].changes.maternalLastName).toEqual({
+      expect(logs[1].changes.participantTypeId).toBeDefined();
+      expect(logs[2].changes.maternalLastName).toEqual({
         old: 'Quispe',
         new: null,
       });
-      expect(logs[2].user?.email).toBe(E2E_ADMIN.email);
+      expect(logs[3].user?.email).toBe(E2E_ADMIN.email);
     });
 
     it('la tabla de auditoría no admite UPDATE ni DELETE', async () => {

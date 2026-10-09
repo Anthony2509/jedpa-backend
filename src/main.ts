@@ -10,7 +10,10 @@ async function bootstrap() {
   const config = app.get(ConfigService);
   configureApp(app);
 
-  if (config.getOrThrow<string>('NODE_ENV') !== 'production') {
+  const swaggerEnabled =
+    config.getOrThrow<string>('NODE_ENV') !== 'production' ||
+    config.get<boolean>('SWAGGER_ENABLED') === true;
+  if (swaggerEnabled) {
     const swaggerConfig = new DocumentBuilder()
       .setTitle('JEDPA API')
       .setDescription(

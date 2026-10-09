@@ -13,8 +13,10 @@ import { DeliveryPlace } from '../../catalogs/delivery-places/entities/delivery-
 import { MacroRegion } from '../../catalogs/macro-regions/entities/macro-region.entity';
 import { ParticipantType } from '../../catalogs/participant-types/entities/participant-type.entity';
 import { Sport } from '../../catalogs/sports/entities/sport.entity';
+import { ROLES } from '../../common/constants/roles';
 import { BCRYPT_ROUNDS } from '../../common/constants/security';
 import { Role } from '../../roles/entities/role.entity';
+import { PASSWORD_RULES } from '../../users/dto/create-user.dto';
 import { User } from '../../users/entities/user.entity';
 import {
   DELIVERY_PLACE_SEEDS,
@@ -63,52 +65,100 @@ async function seedRequirements(manager: EntityManager): Promise<number> {
   return insertMissing(manager, DocumentRequirement, rows);
 }
 
-/**
- * Un usuario por rol con contraseña común, SOLO para desarrollo y pruebas.
- * Los existentes no se modifican. Cada alta queda auditada como acción del sistema.
- */
-async function seedDevUsers(manager: EntityManager, log: Log): Promise<void> {
-  if (process.env.NODE_ENV === 'production') {
-    log('Usuarios de desarrollo: omitidos (NODE_ENV=production).');
+/** Crea un usuario (si no existe) y audita el alta como acción del sistema. */
+async function createUserIfMissing(
+  manager: EntityManager,
+  log: Log,
+  seed: { email: string; fullName: string; role: string; password: string },
+): Promise<void> {
+  const users = manager.getRepository(User);
+  if (await users.existsBy({ email: seed.email })) {
+    log(`Usuario ${seed.email}: ya existe, no se modifica.`);
     return;
   }
-
-  const users = manager.getRepository(User);
+  const role = await manager
+    .getRepository(Role)
+    .findOneByOrFail({ name: seed.role });
+  const user = await users.save(
+    users.create({
+      email: seed.email,
+      fullName: seed.fullName,
+      roleId: role.id,
+      passwordHash: await bcrypt.hash(seed.password, BCRYPT_ROUNDS),
+    }),
+  );
   const auditLogs = manager.getRepository(AuditLog);
-  const roles = await manager.getRepository(Role).find();
-  const roleId = new Map(roles.map((r) => [r.name, r.id]));
-  const passwordHash = await bcrypt.hash(DEV_USER_PASSWORD, BCRYPT_ROUNDS);
+  await auditLogs.save(
+    auditLogs.create({
+      userId: null,
+      action: AuditAction.CREATE,
+      entity: 'User',
+      entityId: user.id,
+      changes: {
+        email: { old: null, new: user.email },
+        roleId: { old: null, new: user.roleId },
+      },
+    }),
+  );
+  log(`Usuario ${seed.email} (${seed.role}): creado.`);
+}
 
+/**
+ * Producción: un único ADMIN inicial con SEED_ADMIN_EMAIL y SEED_ADMIN_PASSWORD,
+ * solo si aún no existe ningún ADMIN. Nunca usuarios de desarrollo.
+ */
+async function seedProductionAdmin(manager: EntityManager, log: Log) {
+  const adminRole = await manager
+    .getRepository(Role)
+    .findOneByOrFail({ name: ROLES.ADMIN });
+  if (await manager.getRepository(User).existsBy({ roleId: adminRole.id })) {
+    log('Administrador: ya existe al menos uno, no se crea otro.');
+    return;
+  }
+  const email = process.env.SEED_ADMIN_EMAIL?.trim().toLowerCase();
+  const password = process.env.SEED_ADMIN_PASSWORD;
+  if (!email || !password) {
+    throw new Error(
+      'No hay administrador: defina SEED_ADMIN_EMAIL y SEED_ADMIN_PASSWORD para crear el primero.',
+    );
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    throw new Error('SEED_ADMIN_EMAIL no es un correo válido.');
+  }
+  if (
+    password.length < PASSWORD_RULES.min ||
+    !PASSWORD_RULES.pattern.test(password)
+  ) {
+    throw new Error(
+      'SEED_ADMIN_PASSWORD debe tener al menos 12 caracteres, con letras y números.',
+    );
+  }
+  await createUserIfMissing(manager, log, {
+    email,
+    fullName: 'Administrador',
+    role: ROLES.ADMIN,
+    password,
+  });
+}
+
+/**
+ * Desarrollo y pruebas: un usuario por rol con contraseña común (DEV_USER_PASSWORD).
+ * Producción: solo el ADMIN inicial.
+ */
+async function seedUsers(manager: EntityManager, log: Log): Promise<void> {
+  if (process.env.NODE_ENV === 'production') {
+    await seedProductionAdmin(manager, log);
+    return;
+  }
   for (const seed of DEV_USER_SEEDS) {
-    if (await users.existsBy({ email: seed.email })) {
-      log(`Usuario ${seed.email}: ya existe, no se modifica.`);
-      continue;
-    }
-    const user = await users.save(
-      users.create({
-        email: seed.email,
-        fullName: seed.fullName,
-        roleId: roleId.get(seed.role),
-        passwordHash,
-      }),
-    );
-    await auditLogs.save(
-      auditLogs.create({
-        userId: null,
-        action: AuditAction.CREATE,
-        entity: 'User',
-        entityId: user.id,
-        changes: {
-          email: { old: null, new: user.email },
-          roleId: { old: null, new: user.roleId },
-        },
-      }),
-    );
-    log(`Usuario ${seed.email} (${seed.role}): creado.`);
+    await createUserIfMissing(manager, log, {
+      ...seed,
+      password: DEV_USER_PASSWORD,
+    });
   }
 }
 
-/** Carga roles, catálogos, requisitos y los usuarios de desarrollo. Idempotente. */
+/** Carga roles, catálogos, requisitos y usuarios iniciales. Idempotente. */
 export async function runSeed(
   dataSource: DataSource,
   log: Log = console.log,
@@ -140,6 +190,6 @@ export async function runSeed(
     };
     const requisitos = await seedRequirements(manager);
     log('Registros nuevos:', { ...counts, requisitos });
-    await seedDevUsers(manager, log);
+    await seedUsers(manager, log);
   });
 }

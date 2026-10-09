@@ -142,6 +142,12 @@ describe('Matriz de permisos (e2e)', () => {
       allowed: ALL,
     },
     {
+      name: 'hoja de prueba de impresión',
+      method: 'get',
+      path: () => '/api/credentials/test-sheet',
+      allowed: ['ADMIN', 'COORDINADOR'],
+    },
+    {
       name: 'crear participante regular',
       method: 'post',
       path: () => '/api/participants',
@@ -192,6 +198,88 @@ describe('Matriz de permisos (e2e)', () => {
         .send(c.body?.('ADMIN'))
         .expect(401));
   });
+
+  describe('Documentos', () => {
+    const PDF = Buffer.from('%PDF-1.4\n%%EOF');
+    let documentsPath: string;
+
+    beforeAll(async () => {
+      const created = await request(app.getHttpServer())
+        .post('/api/participants')
+        .set(auth.ADMIN)
+        .send({
+          documentType: 'DNI',
+          documentNumber: `6000${unique()}`,
+          firstNames: 'Doc',
+          paternalLastName: 'Permisos',
+          gender: 'MALE',
+          birthDate: '2011-03-15',
+          participantTypeId: ids.regular,
+          delegationId: ids.delegation,
+        })
+        .expect(201);
+      const { id } = created.body as { id: string };
+      documentsPath = `/api/participants/${id}/documents`;
+    });
+
+    it.each(ALL)('%s ve la ficha documental', (role) =>
+      request(app.getHttpServer())
+        .get(documentsPath)
+        .set(auth[role])
+        .expect(200),
+    );
+
+    it.each(ALL)('%s sube documentos de participantes regulares', (role) =>
+      request(app.getHttpServer())
+        .post(`${documentsPath}/SEGURO`)
+        .set(auth[role])
+        .attach('file', PDF, 'seguro.pdf')
+        .expect(201),
+    );
+
+    it.each(ALL)('%s revisa documentos de participantes regulares', (role) =>
+      request(app.getHttpServer())
+        .patch(`${documentsPath}/SEGURO/review`)
+        .set(auth[role])
+        .send({ status: 'APPROVED' })
+        .expect(200),
+    );
+
+    it.each([
+      ['ADMIN', 201],
+      ['COORDINADOR', 201],
+      ['OPERADOR', 403],
+    ] as const)('%s carga la Resolución Directoral → %i', (role, status) =>
+      request(app.getHttpServer())
+        .post(`/api/macro-regions/${ids.macro}/resolution`)
+        .set(auth[role])
+        .attach('file', PDF, 'rd.pdf')
+        .expect(status),
+    );
+
+    it('sin token no hay acceso a documentos', () =>
+      request(app.getHttpServer()).get(documentsPath).expect(401));
+  });
+
+  it('la verificación del QR es pública (sin token no responde 401)', () =>
+    request(app.getHttpServer())
+      .get('/api/verify/token-inexistente-1234567890')
+      .expect(404));
+
+  it.each(ALL)(
+    '%s ve los ejemplares impresos de un participante',
+    async (role) => {
+      const list = await request(app.getHttpServer())
+        .get('/api/participants')
+        .set(auth.ADMIN)
+        .expect(200);
+      const [first] = (list.body as { data: { id: string }[] }).data;
+      await request(app.getHttpServer())
+        .get(`/api/participants/${first.id}/credentials`)
+        .set(auth[role])
+        .expect(200);
+    },
+  );
 
   it('solo ADMIN activa o desactiva participantes', async () => {
     const created = await request(app.getHttpServer())

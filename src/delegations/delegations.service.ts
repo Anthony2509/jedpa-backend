@@ -17,21 +17,13 @@ import {
   PaginatedResponse,
 } from '../common/pagination';
 import { escapeLike } from '../common/utils/text';
+import { buildDelegationCode } from './delegation-code';
 import { CreateDelegationDto } from './dto/create-delegation.dto';
 import { DelegationQueryDto } from './dto/delegation-query.dto';
 import { UpdateDelegationDto } from './dto/update-delegation.dto';
 import { Delegation } from './entities/delegation.entity';
 
 const ENTITY = 'Delegation';
-
-/** Código de delegación: macrorregión-disciplina-categoría-género (M1-AJD-B-D). */
-export const buildDelegationCode = (parts: {
-  macroCode: string;
-  sportCode: string;
-  category: string;
-  gender: string;
-}) =>
-  [parts.macroCode, parts.sportCode, parts.category, parts.gender].join('-');
 
 @Injectable()
 export class DelegationsService {

@@ -10,4 +10,6 @@ export enum AuditAction {
   REPRINT = 'REPRINT',
   DELIVER = 'DELIVER',
   DIPLOMA_PRINT = 'DIPLOMA_PRINT',
+  /** Emisión de un enlace temporal a un archivo (documentos de menores). */
+  FILE_ACCESS = 'FILE_ACCESS',
 }

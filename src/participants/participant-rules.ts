@@ -27,14 +27,6 @@ export function assertValidDocumentNumber(
   }
 }
 
-/** Los especiales no requieren documentos: nacen listos para imprimir. */
-export const initialStatusFor = (
-  category: ParticipantTypeCategory,
-): ParticipantStatus =>
-  category === ParticipantTypeCategory.SPECIAL
-    ? ParticipantStatus.READY_TO_PRINT
-    : ParticipantStatus.PENDING_DOCUMENTS;
-
 /** Credenciales especiales (MINEDU, Invitado, Proveedores): solo ADMIN y COORDINADOR. */
 const SPECIAL_MANAGERS: RoleName[] = [ROLES.ADMIN, ROLES.COORDINATOR];
 

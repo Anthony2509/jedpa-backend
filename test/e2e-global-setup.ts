@@ -1,5 +1,6 @@
 // Carga explícita: globalSetup no ejecuta los setupFiles de Jest.
 import './e2e-env';
+import { rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { DataSource } from 'typeorm';
 import { baseDataSourceOptions } from '../src/database/database.options';
@@ -16,6 +17,12 @@ const connection = () => ({
 /** Recrea la base de prueba, aplica migraciones y carga el seed. */
 export default async function globalSetup(): Promise<void> {
   const database = process.env.DB_NAME as string;
+
+  // Archivos subidos en la ejecución anterior (almacenamiento local de pruebas).
+  await rm(process.env.STORAGE_LOCAL_DIR as string, {
+    recursive: true,
+    force: true,
+  });
 
   const server = new DataSource({ ...connection(), database: 'postgres' });
   await server.initialize();
