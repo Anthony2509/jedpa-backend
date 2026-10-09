@@ -1,5 +1,13 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseIntPipe,
+  Post,
+  StreamableFile,
+} from '@nestjs/common';
+import { ApiOperation, ApiProduces, ApiTags } from '@nestjs/swagger';
 import { Actor } from '../audit/audit-actor';
 import type { AuditActor } from '../audit/audit-actor';
 import type { AuthUser } from '../auth/interfaces/auth-user.interface';
@@ -7,6 +15,8 @@ import { ROLES } from '../common/constants/roles';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import { UuidParamPipe } from '../common/pipes/uuid-param.pipe';
+import { CredentialPdfService } from './credential-pdf.service';
+import { pdfFile } from './pdf/pdf-response';
 import { CredentialsService } from './credentials.service';
 import { CredentialCopyDto } from './dto/credential-copy.dto';
 import { IssueCredentialDto } from './dto/issue-credential.dto';
@@ -14,7 +24,10 @@ import { IssueCredentialDto } from './dto/issue-credential.dto';
 @ApiTags('Credenciales')
 @Controller('participants/:participantId/credentials')
 export class CredentialsController {
-  constructor(private readonly credentials: CredentialsService) {}
+  constructor(
+    private readonly credentials: CredentialsService,
+    private readonly pdf: CredentialPdfService,
+  ) {}
 
   @Get()
   @ApiOperation({ summary: 'Ejemplares impresos (original y duplicados)' })
@@ -40,5 +53,27 @@ export class CredentialsController {
     @Actor() actor: AuditActor,
   ): Promise<CredentialCopyDto> {
     return this.credentials.issue(participantId, dto, user, actor);
+  }
+
+  @Get(':copyNumber/pdf')
+  @Roles(ROLES.ADMIN, ROLES.COORDINATOR, ROLES.OPERATOR)
+  @ApiProduces('application/pdf')
+  @ApiOperation({
+    summary:
+      'PDF de un ejemplar (para imprimir o reimprimir el MISMO ejemplar)',
+    description:
+      'No crea duplicados: sirve ante un atasco de papel. Queda auditado. Un ejemplar reemplazado responde 409.',
+  })
+  async pdfOf(
+    @Param('participantId', UuidParamPipe) participantId: string,
+    @Param('copyNumber', ParseIntPipe) copyNumber: number,
+    @CurrentUser() user: AuthUser,
+    @Actor() actor: AuditActor,
+  ): Promise<StreamableFile> {
+    const copyId = await this.credentials.copyIdOf(participantId, copyNumber);
+    return pdfFile(
+      await this.pdf.render([copyId], user, actor),
+      `credencial-${copyNumber}.pdf`,
+    );
   }
 }

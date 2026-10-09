@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  HttpException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -16,6 +17,7 @@ import { Participant } from '../participants/entities/participant.entity';
 import { ParticipantStatus } from '../participants/enums';
 import { assertCanManageCategory } from '../participants/participant-rules';
 import { copyLabel, nextCopyNumber } from './credential-rules';
+import { BatchIssueResultDto } from './dto/batch.dto';
 import { CredentialCopyDto } from './dto/credential-copy.dto';
 import { IssueCredentialDto } from './dto/issue-credential.dto';
 import { CredentialCopy } from './entities/credential-copy.entity';
@@ -130,6 +132,47 @@ export class CredentialsService {
       return copy.id;
     });
     return this.findCopy(id);
+  }
+
+  /**
+   * Emite el ORIGINAL de varios participantes. Cada uno va en su propia transacción:
+   * los que no cumplen (requisitos, ya impresos, permisos) se informan sin frenar al resto.
+   */
+  async issueBatch(
+    participantIds: string[],
+    user: AuthUser,
+    actor: AuditActor,
+  ): Promise<BatchIssueResultDto> {
+    const result: BatchIssueResultDto = { issued: [], skipped: [] };
+    for (const participantId of participantIds) {
+      try {
+        const copy = await this.issue(
+          participantId,
+          { copyNumber: 0 },
+          user,
+          actor,
+        );
+        result.issued.push({ participantId, copyId: copy.id });
+      } catch (error) {
+        if (!(error instanceof HttpException)) throw error;
+        const response = error.getResponse();
+        const message =
+          typeof response === 'object' && 'message' in response
+            ? String(response.message)
+            : error.message;
+        result.skipped.push({ participantId, reason: message });
+      }
+    }
+    return result;
+  }
+
+  /** Id del ejemplar de un participante por su número (0 = original). */
+  async copyIdOf(participantId: string, copyNumber: number): Promise<string> {
+    const copy = await this.dataSource
+      .getRepository(CredentialCopy)
+      .findOneBy({ participantId, copyNumber });
+    if (!copy) throw new NotFoundException('Ese ejemplar no ha sido emitido.');
+    return copy.id;
   }
 
   async findCopy(id: string): Promise<CredentialCopyDto> {

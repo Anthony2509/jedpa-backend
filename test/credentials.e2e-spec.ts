@@ -21,7 +21,24 @@ interface CopyBody {
 }
 
 const PDF = Buffer.from('%PDF-1.4\n%%EOF');
-const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0]);
+/** PNG real de 1×1 píxel: se incrusta en el PDF como foto. */
+const PNG = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+  'base64',
+);
+
+/** Cuerpo binario (PDF) como Buffer. */
+const binary = (
+  res: NodeJS.ReadableStream,
+  done: (err: Error | null, body: Buffer) => void,
+) => {
+  const chunks: Buffer[] = [];
+  res.on('data', (chunk: Buffer) => chunks.push(chunk));
+  res.on('end', () => done(null, Buffer.concat(chunks)));
+};
+
+const pageCount = (pdf: Buffer) =>
+  (pdf.toString('latin1').match(/\/Type \/Page\b/g) ?? []).length;
 const REQUIRED = [
   'RESOLUCION_DIRECTORAL',
   'DNI',
@@ -296,15 +313,120 @@ describe('Impresión de credenciales (e2e)', () => {
     });
   });
 
+  describe('PDF imprimible', () => {
+    it('descarga el PDF de un ejemplar vigente (anverso y reverso)', async () => {
+      const res = await request(server())
+        .get(`/api/participants/${ids.regular}/credentials/3/pdf`)
+        .set(operator)
+        .buffer(true)
+        .parse(binary)
+        .expect(200);
+      expect(res.headers['content-type']).toBe('application/pdf');
+      expect(res.headers['content-disposition']).toBe(
+        'inline; filename="credencial-3.pdf"',
+      );
+      const pdf = res.body as Buffer;
+      expect(pdf.subarray(0, 5).toString()).toBe('%PDF-');
+      expect(pageCount(pdf)).toBe(2);
+    });
+
+    it('no imprime un ejemplar reemplazado ni uno inexistente', async () => {
+      await request(server())
+        .get(`/api/participants/${ids.regular}/credentials/0/pdf`)
+        .set(admin)
+        .expect(409);
+      await request(server())
+        .get(`/api/participants/${ids.notReady}/credentials/0/pdf`)
+        .set(admin)
+        .expect(404);
+    });
+
+    it('emite en lote, informa los omitidos y arma un solo PDF', async () => {
+      const minedu = await catalogId(app, admin, 'participant-types', 'MINEDU');
+      const created: string[] = [];
+      for (const documentNumber of ['42000001', '42000002']) {
+        const res = await request(server())
+          .post('/api/participants')
+          .set(admin)
+          .send({
+            documentType: 'DNI',
+            documentNumber,
+            firstNames: 'Lote',
+            paternalLastName: 'Especial',
+            participantTypeId: minedu,
+            institution: 'MINEDU',
+          })
+          .expect(201);
+        created.push((res.body as { id: string }).id);
+      }
+
+      const batch = await request(server())
+        .post('/api/credentials/batch')
+        .set(admin)
+        .send({ participantIds: [...created, ids.notReady] })
+        .expect(200);
+      const result = batch.body as {
+        issued: { participantId: string; copyId: string }[];
+        skipped: { participantId: string; reason: string }[];
+      };
+      expect(result.issued.map((i) => i.participantId)).toEqual(created);
+      expect(result.skipped).toEqual([
+        {
+          participantId: ids.notReady,
+          reason: expect.stringContaining('requisitos') as string,
+        },
+      ]);
+
+      const pdf = await request(server())
+        .post('/api/credentials/pdf')
+        .set(admin)
+        .send({ copyIds: result.issued.map((i) => i.copyId) })
+        .buffer(true)
+        .parse(binary)
+        .expect(200);
+      expect(pageCount(pdf.body as Buffer)).toBe(4);
+    });
+
+    it('la hoja de prueba es solo para ADMIN y COORDINADOR', async () => {
+      await request(server())
+        .get('/api/credentials/test-sheet')
+        .set(operator)
+        .expect(403);
+      const res = await request(server())
+        .get('/api/credentials/test-sheet')
+        .set(admin)
+        .buffer(true)
+        .parse(binary)
+        .expect(200);
+      expect(pageCount(res.body as Buffer)).toBe(2);
+    });
+
+    it('cada descarga de PDF queda auditada', async () => {
+      const res = await request(server())
+        .get('/api/audit-logs')
+        .query({
+          participantId: ids.regular,
+          action: 'FILE_ACCESS',
+          entity: 'CredentialCopy',
+        })
+        .set(admin)
+        .expect(200);
+      expect(
+        (res.body as { meta: { total: number } }).meta.total,
+      ).toBeGreaterThanOrEqual(1);
+    });
+  });
+
   it('cada impresión queda auditada (PRINT / REPRINT)', async () => {
     const res = await request(server())
       .get('/api/audit-logs')
       .query({ participantId: ids.regular, entity: 'CredentialCopy' })
       .set(admin)
       .expect(200);
-    const actions = (res.body as { data: { action: string }[] }).data.map(
-      (l) => l.action,
-    );
+    // Solo emisiones: las descargas de PDF se registran aparte como FILE_ACCESS.
+    const actions = (res.body as { data: { action: string }[] }).data
+      .map((l) => l.action)
+      .filter((action) => action !== 'FILE_ACCESS');
     expect(actions.sort()).toEqual(['PRINT', 'REPRINT', 'REPRINT', 'REPRINT']);
   });
 });

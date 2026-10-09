@@ -34,6 +34,9 @@ export class CredentialCopyDto {
   })
   isRevoked: boolean;
 
+  @ApiProperty({ description: 'Token del QR (GET /api/verify/:token)' })
+  verificationToken: string;
+
   @ApiProperty({ description: 'URL que contiene el QR' })
   verificationUrl: string;
 
@@ -46,6 +49,7 @@ export class CredentialCopyDto {
       printedBy: { id: copy.printedBy.id, fullName: copy.printedBy.fullName },
       reason: copy.reason,
       isRevoked: copy.isRevoked,
+      verificationToken: copy.verificationToken,
       verificationUrl: `${verifyBaseUrl}/${copy.verificationToken}`,
     };
   }

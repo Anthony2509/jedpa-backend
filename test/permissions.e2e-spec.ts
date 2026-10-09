@@ -142,6 +142,12 @@ describe('Matriz de permisos (e2e)', () => {
       allowed: ALL,
     },
     {
+      name: 'hoja de prueba de impresión',
+      method: 'get',
+      path: () => '/api/credentials/test-sheet',
+      allowed: ['ADMIN', 'COORDINADOR'],
+    },
+    {
       name: 'crear participante regular',
       method: 'post',
       path: () => '/api/participants',
@@ -254,6 +260,26 @@ describe('Matriz de permisos (e2e)', () => {
     it('sin token no hay acceso a documentos', () =>
       request(app.getHttpServer()).get(documentsPath).expect(401));
   });
+
+  it('la verificación del QR es pública (sin token no responde 401)', () =>
+    request(app.getHttpServer())
+      .get('/api/verify/token-inexistente-1234567890')
+      .expect(404));
+
+  it.each(ALL)(
+    '%s ve los ejemplares impresos de un participante',
+    async (role) => {
+      const list = await request(app.getHttpServer())
+        .get('/api/participants')
+        .set(auth.ADMIN)
+        .expect(200);
+      const [first] = (list.body as { data: { id: string }[] }).data;
+      await request(app.getHttpServer())
+        .get(`/api/participants/${first.id}/credentials`)
+        .set(auth[role])
+        .expect(200);
+    },
+  );
 
   it('solo ADMIN activa o desactiva participantes', async () => {
     const created = await request(app.getHttpServer())

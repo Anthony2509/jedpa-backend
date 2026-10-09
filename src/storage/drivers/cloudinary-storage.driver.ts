@@ -64,6 +64,15 @@ export class CloudinaryStorageDriver implements StorageDriver {
     });
   }
 
+  async get(storageKey: string, mimeType: AllowedMimeType): Promise<Buffer> {
+    const { url } = await this.signedUrl(storageKey, mimeType, 60);
+    const res = await fetch(url);
+    if (!res.ok) {
+      throw new Error(`Cloudinary respondió ${res.status} al leer el archivo.`);
+    }
+    return Buffer.from(await res.arrayBuffer());
+  }
+
   signedUrl(
     storageKey: string,
     mimeType: AllowedMimeType,

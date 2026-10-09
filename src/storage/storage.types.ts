@@ -21,6 +21,8 @@ export interface SignedUrl {
 export interface StorageDriver {
   readonly provider: string;
   put(buffer: Buffer, mimeType: AllowedMimeType): Promise<StoredObject>;
+  /** Contenido del archivo (p. ej. la foto que se imprime en la credencial). */
+  get(storageKey: string, mimeType: AllowedMimeType): Promise<Buffer>;
   /** Enlace temporal de solo lectura. */
   signedUrl(
     storageKey: string,

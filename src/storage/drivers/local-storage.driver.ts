@@ -46,6 +46,10 @@ export class LocalStorageDriver implements StorageDriver {
     return { storageKey };
   }
 
+  get(storageKey: string): Promise<Buffer> {
+    return readFile(this.pathFor(storageKey));
+  }
+
   signedUrl(
     storageKey: string,
     mimeType: AllowedMimeType,

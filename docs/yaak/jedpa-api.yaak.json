@@ -1,14 +1,14 @@
 {
   "yaakVersion": "2026.2.0",
   "yaakSchema": 4,
-  "timestamp": "2026-10-09T00:22:58",
+  "timestamp": "2026-10-09T00:38:20",
   "resources": {
     "workspaces": [
       {
         "model": "workspace",
         "id": "wk_JedpaApi01",
         "name": "JEDPA API",
-        "description": "API del sistema de credenciales JEDPA (NestJS, puerto 4000).\n\n1. Levanta el backend: `docker compose up -d`, `npm run migration:run`, `npm run seed`, `npm run start:dev`.\n2. Elige el entorno **Admin**, **Coordinador** u **Operador** (arriba a la izquierda).\n3. Ejecuta **01 · Autenticación → Login**. El token se aplica solo a todas las peticiones.\n4. Recorre las carpetas en orden (00 → 08).\n\nAl cambiar de entorno, vuelve a ejecutar **Login**.",
+        "description": "API del sistema de credenciales JEDPA (NestJS, puerto 4000).\n\n1. Levanta el backend: `docker compose up -d`, `npm run migration:run`, `npm run seed`, `npm run start:dev`.\n2. Elige el entorno **Admin**, **Coordinador** u **Operador** (arriba a la izquierda).\n3. Ejecuta **01 · Autenticación → Login**. El token se aplica solo a todas las peticiones.\n4. Recorre las carpetas en orden (00 → 09).\n\nAl cambiar de entorno, vuelve a ejecutar **Login**.",
         "authenticationType": "bearer",
         "authentication": {
           "token": "${[ response.body.path(request='rq_JdpLogin01', behavior='ttl', ttl='25200', path='$.accessToken') ]}"
@@ -185,8 +185,8 @@
         "id": "fl_JdpFold08",
         "workspaceId": "wk_JedpaApi01",
         "folderId": null,
-        "name": "07 · Auditoría (ADMIN)",
-        "description": "Historial de solo lectura. Solo ADMIN.",
+        "name": "07 · Credenciales",
+        "description": "Requiere el deportista en READY_TO_PRINT (carpeta 06 con todo aprobado). Imprimir NO marca la entrega.",
         "sortPriority": 8000,
         "headers": [],
         "authentication": {},
@@ -197,9 +197,21 @@
         "id": "fl_JdpFold09",
         "workspaceId": "wk_JedpaApi01",
         "folderId": null,
-        "name": "08 · Errores esperados",
-        "description": "Cada petición debe FALLAR con el código indicado: comprueba las reglas y mensajes.",
+        "name": "08 · Auditoría (ADMIN)",
+        "description": "Historial de solo lectura. Solo ADMIN.",
         "sortPriority": 9000,
+        "headers": [],
+        "authentication": {},
+        "authenticationType": null
+      },
+      {
+        "model": "folder",
+        "id": "fl_JdpFold10",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": null,
+        "name": "09 · Errores esperados",
+        "description": "Cada petición debe FALLAR con el código indicado: comprueba las reglas y mensajes.",
+        "sortPriority": 10000,
         "headers": [],
         "authentication": {},
         "authenticationType": null
@@ -1334,9 +1346,211 @@
       },
       {
         "model": "http_request",
+        "id": "rq_JdpCredL01",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold08",
+        "name": "Ejemplares del deportista",
+        "description": "Original y duplicados, con su QR y si fueron revocados.",
+        "method": "GET",
+        "url": "${[ baseUrl ]}/participants/${[ response.body.path(request='rq_JdpPartC01', path='$.id') ]}/credentials",
+        "urlParameters": [],
+        "headers": [],
+        "bodyType": null,
+        "body": {},
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 1
+      },
+      {
+        "model": "http_request",
         "id": "rq_JdpReq0037",
         "workspaceId": "wk_JedpaApi01",
         "folderId": "fl_JdpFold08",
+        "name": "Emitir original",
+        "description": "copyNumber = ejemplar esperado: un doble clic responde 409 en vez de emitir dos. El participante queda PRINTED.",
+        "method": "POST",
+        "url": "${[ baseUrl ]}/participants/${[ response.body.path(request='rq_JdpPartC01', path='$.id') ]}/credentials",
+        "urlParameters": [],
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json",
+            "enabled": true
+          }
+        ],
+        "bodyType": "application/json",
+        "body": {
+          "text": "{\n  \"copyNumber\": 0\n}"
+        },
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 2
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpReq0038",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold08",
+        "name": "PDF del original",
+        "description": "120 × 155 mm, anverso y reverso. Volver a descargarlo NO crea un duplicado.",
+        "method": "GET",
+        "url": "${[ baseUrl ]}/participants/${[ response.body.path(request='rq_JdpPartC01', path='$.id') ]}/credentials/0/pdf",
+        "urlParameters": [],
+        "headers": [],
+        "bodyType": null,
+        "body": {},
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 3
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpReq0039",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold08",
+        "name": "Emitir duplicado 1",
+        "description": "Motivo obligatorio. Revoca el QR del original. Máximo 3 duplicados.",
+        "method": "POST",
+        "url": "${[ baseUrl ]}/participants/${[ response.body.path(request='rq_JdpPartC01', path='$.id') ]}/credentials",
+        "urlParameters": [],
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json",
+            "enabled": true
+          }
+        ],
+        "bodyType": "application/json",
+        "body": {
+          "text": "{\n  \"copyNumber\": 1,\n  \"reason\": \"Pérdida reportada por el delegado\"\n}"
+        },
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 4
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpReq0040",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold08",
+        "name": "PDF del duplicado 1",
+        "description": "",
+        "method": "GET",
+        "url": "${[ baseUrl ]}/participants/${[ response.body.path(request='rq_JdpPartC01', path='$.id') ]}/credentials/1/pdf",
+        "urlParameters": [],
+        "headers": [],
+        "bodyType": null,
+        "body": {},
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 5
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpReq0041",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold08",
+        "name": "Verificar QR vigente (público)",
+        "description": "Lo que ve el personal de puerta: datos mínimos y estado de documentos, sin DNI ni archivos.",
+        "method": "GET",
+        "url": "${[ baseUrl ]}/verify/${[ response.body.path(request='rq_JdpCredL01', behavior='always', path='$[-1:].verificationToken') ]}",
+        "urlParameters": [],
+        "headers": [],
+        "bodyType": null,
+        "body": {},
+        "authenticationType": "none",
+        "authentication": {},
+        "sortPriority": 6
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpReq0042",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold08",
+        "name": "Verificar QR revocado (público)",
+        "description": "Tras emitir un duplicado: valid=false y sin datos del participante.",
+        "method": "GET",
+        "url": "${[ baseUrl ]}/verify/${[ response.body.path(request='rq_JdpCredL01', behavior='always', path='$[0].verificationToken') ]}",
+        "urlParameters": [],
+        "headers": [],
+        "bodyType": null,
+        "body": {},
+        "authenticationType": "none",
+        "authentication": {},
+        "sortPriority": 7
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpBatch01",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold08",
+        "name": "Emitir en lote (invitado creado)",
+        "description": "Emite el ORIGINAL de cada participante; informa los omitidos con su motivo.",
+        "method": "POST",
+        "url": "${[ baseUrl ]}/credentials/batch",
+        "urlParameters": [],
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json",
+            "enabled": true
+          }
+        ],
+        "bodyType": "application/json",
+        "body": {
+          "text": "{\n  \"participantIds\": [\n    \"${[ response.body.path(request='rq_JdpPartS01', path='$.id') ]}\"\n  ]\n}"
+        },
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 8
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpReq0043",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold08",
+        "name": "PDF del lote",
+        "description": "",
+        "method": "POST",
+        "url": "${[ baseUrl ]}/credentials/pdf",
+        "urlParameters": [],
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json",
+            "enabled": true
+          }
+        ],
+        "bodyType": "application/json",
+        "body": {
+          "text": "{\n  \"copyIds\": [\n    \"${[ response.body.path(request='rq_JdpBatch01', path='$.issued[0].copyId') ]}\"\n  ]\n}"
+        },
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 9
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpReq0044",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold08",
+        "name": "Hoja de prueba de impresión",
+        "description": "ADMIN o COORDINADOR. Imprímela en papel común y superponla a una cartulina para calibrar (CREDENTIAL_OFFSET_X/Y_MM).",
+        "method": "GET",
+        "url": "${[ baseUrl ]}/credentials/test-sheet",
+        "urlParameters": [],
+        "headers": [],
+        "bodyType": null,
+        "body": {},
+        "authenticationType": null,
+        "authentication": {},
+        "sortPriority": 10
+      },
+      {
+        "model": "http_request",
+        "id": "rq_JdpReq0045",
+        "workspaceId": "wk_JedpaApi01",
+        "folderId": "fl_JdpFold09",
         "name": "Historial general",
         "description": "Más reciente primero. Fechas en hora de Perú.",
         "method": "GET",
@@ -1382,9 +1596,9 @@
       },
       {
         "model": "http_request",
-        "id": "rq_JdpReq0038",
+        "id": "rq_JdpReq0046",
         "workspaceId": "wk_JedpaApi01",
-        "folderId": "fl_JdpFold08",
+        "folderId": "fl_JdpFold09",
         "name": "Historial del deportista creado",
         "description": "Alta y ediciones con el campo afectado, valor anterior y nuevo, y quién lo hizo.",
         "method": "GET",
@@ -1405,9 +1619,9 @@
       },
       {
         "model": "http_request",
-        "id": "rq_JdpReq0039",
+        "id": "rq_JdpReq0047",
         "workspaceId": "wk_JedpaApi01",
-        "folderId": "fl_JdpFold09",
+        "folderId": "fl_JdpFold10",
         "name": "401 · Sin token",
         "description": "Esperado: **401** \"Sesión inválida o expirada.\"",
         "method": "GET",
@@ -1422,9 +1636,9 @@
       },
       {
         "model": "http_request",
-        "id": "rq_JdpReq0040",
+        "id": "rq_JdpReq0048",
         "workspaceId": "wk_JedpaApi01",
-        "folderId": "fl_JdpFold09",
+        "folderId": "fl_JdpFold10",
         "name": "401 · Contraseña incorrecta",
         "description": "Esperado: **401** con mensaje genérico. Cuenta para el límite de 5 intentos por minuto.",
         "method": "POST",
@@ -1447,9 +1661,9 @@
       },
       {
         "model": "http_request",
-        "id": "rq_JdpReq0041",
+        "id": "rq_JdpReq0049",
         "workspaceId": "wk_JedpaApi01",
-        "folderId": "fl_JdpFold09",
+        "folderId": "fl_JdpFold10",
         "name": "400 · Campo no permitido",
         "description": "Esperado: **400** \"El campo status no está permitido.\" y los campos obligatorios faltantes.",
         "method": "POST",
@@ -1472,9 +1686,9 @@
       },
       {
         "model": "http_request",
-        "id": "rq_JdpReq0042",
+        "id": "rq_JdpReq0050",
         "workspaceId": "wk_JedpaApi01",
-        "folderId": "fl_JdpFold09",
+        "folderId": "fl_JdpFold10",
         "name": "400 · DNI inválido",
         "description": "Esperado: **400** \"El DNI debe tener exactamente 8 dígitos.\"",
         "method": "POST",
@@ -1497,9 +1711,9 @@
       },
       {
         "model": "http_request",
-        "id": "rq_JdpReq0043",
+        "id": "rq_JdpReq0051",
         "workspaceId": "wk_JedpaApi01",
-        "folderId": "fl_JdpFold09",
+        "folderId": "fl_JdpFold10",
         "name": "400 · Deportista sin delegación",
         "description": "Esperado: **400** con delegación, género y fecha de nacimiento obligatorios.",
         "method": "POST",
@@ -1522,9 +1736,9 @@
       },
       {
         "model": "http_request",
-        "id": "rq_JdpReq0044",
+        "id": "rq_JdpReq0052",
         "workspaceId": "wk_JedpaApi01",
-        "folderId": "fl_JdpFold09",
+        "folderId": "fl_JdpFold10",
         "name": "400 · Paginación fuera de rango",
         "description": "Esperado: **400** (limit máximo 100, page mínimo 1).",
         "method": "GET",
@@ -1550,9 +1764,9 @@
       },
       {
         "model": "http_request",
-        "id": "rq_JdpReq0045",
+        "id": "rq_JdpReq0053",
         "workspaceId": "wk_JedpaApi01",
-        "folderId": "fl_JdpFold09",
+        "folderId": "fl_JdpFold10",
         "name": "404 · Participante inexistente",
         "description": "",
         "method": "GET",
@@ -1567,9 +1781,9 @@
       },
       {
         "model": "http_request",
-        "id": "rq_JdpReq0046",
+        "id": "rq_JdpReq0054",
         "workspaceId": "wk_JedpaApi01",
-        "folderId": "fl_JdpFold09",
+        "folderId": "fl_JdpFold10",
         "name": "400 · Id que no es UUID",
         "description": "Esperado: **400** \"El identificador no es un UUID válido.\"",
         "method": "GET",
@@ -1584,9 +1798,9 @@
       },
       {
         "model": "http_request",
-        "id": "rq_JdpReq0047",
+        "id": "rq_JdpReq0055",
         "workspaceId": "wk_JedpaApi01",
-        "folderId": "fl_JdpFold09",
+        "folderId": "fl_JdpFold10",
         "name": "403 · Operador lista usuarios",
         "description": "Usa el entorno **Operador** (y ejecuta Login). Esperado: **403**.",
         "method": "GET",

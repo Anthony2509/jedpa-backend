@@ -71,6 +71,16 @@ export class StorageService {
     }
   }
 
+  /** Contenido de un archivo almacenado (uso interno: PDF de credenciales). */
+  read(file: StoredFile): Promise<Buffer> {
+    if (file.provider !== this.driver.provider) {
+      throw new ConflictException(
+        'El archivo está en otro proveedor de almacenamiento.',
+      );
+    }
+    return this.driver.get(file.storageKey, file.mimeType as AllowedMimeType);
+  }
+
   /** Enlace temporal de solo lectura. */
   accessUrl(file: StoredFile, maxTtlSeconds?: number): Promise<SignedUrl> {
     if (file.provider !== this.driver.provider) {

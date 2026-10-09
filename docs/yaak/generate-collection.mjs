@@ -36,6 +36,8 @@ const ID = {
   findDelegation: 'rq_JdpDelegF1',
   createParticipant: 'rq_JdpPartC01',
   createSpecial: 'rq_JdpPartS01',
+  listCredentials: 'rq_JdpCredL01',
+  batch: 'rq_JdpBatch01',
 };
 
 const TOKEN = `\${[ response.body.path(request='${ID.login}', behavior='ttl', ttl='25200', path='$.accessToken') ]}`;
@@ -335,7 +337,66 @@ folder(
   },
 );
 
-folder('07 · Auditoría (ADMIN)', 'Historial de solo lectura. Solo ADMIN.', (add) => {
+folder(
+  '07 · Credenciales',
+  'Requiere el deportista en READY_TO_PRINT (carpeta 06 con todo aprobado). Imprimir NO marca la entrega.',
+  (add) => {
+    const participant = fromResponse(ID.createParticipant, '$.id', null);
+    const credentials = `/participants/${participant}/credentials`;
+    add({
+      id: ID.listCredentials,
+      name: 'Ejemplares del deportista',
+      path: credentials,
+      description: 'Original y duplicados, con su QR y si fueron revocados.',
+    });
+    add({
+      name: 'Emitir original',
+      method: 'POST',
+      path: credentials,
+      body: { copyNumber: 0 },
+      description: 'copyNumber = ejemplar esperado: un doble clic responde 409 en vez de emitir dos. El participante queda PRINTED.',
+    });
+    add({ name: 'PDF del original', path: `${credentials}/0/pdf`, description: '120 × 155 mm, anverso y reverso. Volver a descargarlo NO crea un duplicado.' });
+    add({
+      name: 'Emitir duplicado 1',
+      method: 'POST',
+      path: credentials,
+      body: { copyNumber: 1, reason: 'Pérdida reportada por el delegado' },
+      description: 'Motivo obligatorio. Revoca el QR del original. Máximo 3 duplicados.',
+    });
+    add({ name: 'PDF del duplicado 1', path: `${credentials}/1/pdf` });
+    // 'always': vuelve a leer la lista para tomar el último ejemplar emitido.
+    add({
+      name: 'Verificar QR vigente (público)',
+      path: `/verify/${fromResponse(ID.listCredentials, '$[-1:].verificationToken', 'always')}`,
+      auth: 'none',
+      description: 'Lo que ve el personal de puerta: datos mínimos y estado de documentos, sin DNI ni archivos.',
+    });
+    add({
+      name: 'Verificar QR revocado (público)',
+      path: `/verify/${fromResponse(ID.listCredentials, '$[0].verificationToken', 'always')}`,
+      auth: 'none',
+      description: 'Tras emitir un duplicado: valid=false y sin datos del participante.',
+    });
+    add({
+      id: ID.batch,
+      name: 'Emitir en lote (invitado creado)',
+      method: 'POST',
+      path: '/credentials/batch',
+      body: { participantIds: [fromResponse(ID.createSpecial, '$.id', null)] },
+      description: 'Emite el ORIGINAL de cada participante; informa los omitidos con su motivo.',
+    });
+    add({
+      name: 'PDF del lote',
+      method: 'POST',
+      path: '/credentials/pdf',
+      body: { copyIds: [fromResponse(ID.batch, '$.issued[0].copyId', null)] },
+    });
+    add({ name: 'Hoja de prueba de impresión', path: '/credentials/test-sheet', description: 'ADMIN o COORDINADOR. Imprímela en papel común y superponla a una cartulina para calibrar (CREDENTIAL_OFFSET_X/Y_MM).' });
+  },
+);
+
+folder('08 · Auditoría (ADMIN)', 'Historial de solo lectura. Solo ADMIN.', (add) => {
   add({
     name: 'Historial general',
     path: '/audit-logs',
@@ -350,7 +411,7 @@ folder('07 · Auditoría (ADMIN)', 'Historial de solo lectura. Solo ADMIN.', (ad
   });
 });
 
-folder('08 · Errores esperados', 'Cada petición debe FALLAR con el código indicado: comprueba las reglas y mensajes.', (add) => {
+folder('09 · Errores esperados', 'Cada petición debe FALLAR con el código indicado: comprueba las reglas y mensajes.', (add) => {
   add({ name: '401 · Sin token', path: '/auth/me', auth: 'none', description: 'Esperado: **401** "Sesión inválida o expirada."' });
   add({ name: '401 · Contraseña incorrecta', method: 'POST', path: '/auth/login', auth: 'none', body: { email: v('email'), password: 'incorrecta' }, description: 'Esperado: **401** con mensaje genérico. Cuenta para el límite de 5 intentos por minuto.' });
   add({ name: '400 · Campo no permitido', method: 'POST', path: '/participants', body: { status: 'DELIVERED' }, description: 'Esperado: **400** "El campo status no está permitido." y los campos obligatorios faltantes.' });
@@ -401,7 +462,7 @@ const collection = {
           '1. Levanta el backend: `docker compose up -d`, `npm run migration:run`, `npm run seed`, `npm run start:dev`.\n' +
           '2. Elige el entorno **Admin**, **Coordinador** u **Operador** (arriba a la izquierda).\n' +
           '3. Ejecuta **01 · Autenticación → Login**. El token se aplica solo a todas las peticiones.\n' +
-          '4. Recorre las carpetas en orden (00 → 08).\n\n' +
+          '4. Recorre las carpetas en orden (00 → 09).\n\n' +
           'Al cambiar de entorno, vuelve a ejecutar **Login**.',
         authenticationType: 'bearer',
         authentication: { token: TOKEN },
