@@ -1,14 +1,28 @@
 import * as Joi from 'joi';
 
+/** Obligatoria solo si no se define DATABASE_URL. */
+const requiredWithoutUrl = (schema: Joi.Schema) =>
+  schema.when('DATABASE_URL', {
+    is: Joi.exist(),
+    then: Joi.optional(),
+    otherwise: Joi.required(),
+  });
+
 export const envValidationSchema = Joi.object({
   NODE_ENV: Joi.string().valid('development', 'production', 'test').required(),
   PORT: Joi.number().port().required(),
 
-  DB_HOST: Joi.string().required(),
-  DB_PORT: Joi.number().port().required(),
-  DB_USER: Joi.string().required(),
-  DB_PASSWORD: Joi.string().required(),
-  DB_NAME: Joi.string().required(),
+  // Base de datos: DATABASE_URL (Railway) o, si no existe, las variables DB_*.
+  DATABASE_URL: Joi.string().uri({ scheme: ['postgres', 'postgresql'] }),
+  DB_HOST: requiredWithoutUrl(Joi.string()),
+  DB_PORT: requiredWithoutUrl(Joi.number().port()),
+  DB_USER: requiredWithoutUrl(Joi.string()),
+  DB_PASSWORD: requiredWithoutUrl(Joi.string()),
+  DB_NAME: requiredWithoutUrl(Joi.string()),
+  DB_SSL: Joi.boolean().default(false),
+
+  /** Swagger (/docs) en producción: desactivado salvo que se pida (p. ej. en QA). */
+  SWAGGER_ENABLED: Joi.boolean().default(false),
 
   JWT_SECRET: Joi.string().min(32).required(),
   JWT_EXPIRES_IN: Joi.string()

@@ -1,0 +1,12 @@
+node_modules
+dist
+coverage
+storage
+storage-test
+test
+docs
+.git
+.env
+.env.*
+!.env.example
+*.log
