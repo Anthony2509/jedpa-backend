@@ -27,6 +27,12 @@ export const envValidationSchema = Joi.object({
     .uri({ scheme: ['http', 'https'] })
     .default('http://localhost:4000'),
 
+  /** Página del frontend que abre el QR. Por defecto: FRONTEND_URL + /verificar. */
+  VERIFY_PUBLIC_URL: Joi.string().uri({ scheme: ['http', 'https'] }),
+  /** Calibración de impresión de credenciales (mm; positivo = derecha/abajo). */
+  CREDENTIAL_OFFSET_X_MM: Joi.number().min(-20).max(20).default(0),
+  CREDENTIAL_OFFSET_Y_MM: Joi.number().min(-20).max(20).default(0),
+
   // Almacenamiento de archivos (documentos de participantes).
   STORAGE_DRIVER: Joi.string().valid('local', 'cloudinary').default('local'),
   STORAGE_LOCAL_DIR: Joi.string().default('storage'),

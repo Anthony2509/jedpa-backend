@@ -14,6 +14,7 @@ import {
   envValidationSchema,
 } from './config/env.validation';
 import { typeOrmConfigFactory } from './config/typeorm.config';
+import { CredentialsModule } from './credentials/credentials.module';
 import { DelegationsModule } from './delegations/delegations.module';
 import { DocumentsModule } from './documents/documents.module';
 import { HealthModule } from './health/health.module';
@@ -49,6 +50,7 @@ import { UsersModule } from './users/users.module';
     ParticipantsModule,
     StorageModule,
     DocumentsModule,
+    CredentialsModule,
   ],
   providers: [
     // Orden: límite de peticiones → autenticación → roles.
